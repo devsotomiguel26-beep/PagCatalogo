@@ -12,8 +12,8 @@ interface Gallery {
   event_date: string;
   categories: {
     name: string;
-  };
-  photos: { count: number }[];
+  } | null;
+  photos: any[];
 }
 
 export default function DashboardPage() {
@@ -301,7 +301,7 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">
-                        {gallery.categories.name}
+                        {gallery.categories?.name || 'Sin categoría'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
