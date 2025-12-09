@@ -1,21 +1,19 @@
-import nodemailer from 'nodemailer';
+import * as nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransporter({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-});
+let transporter: nodemailer.Transporter | null = null;
 
-// Verify configuration on startup
-transporter.verify(function (error, success) {
-  if (error) {
-    console.error('❌ Error en configuración de Gmail SMTP:', error);
-  } else {
-    console.log('✅ Gmail SMTP configurado correctamente y listo para enviar emails');
+function getTransporter() {
+  if (!transporter) {
+    transporter = nodemailer.createTransporter({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
   }
-});
+  return transporter;
+}
 
 interface SendEmailOptions {
   to: string;
@@ -28,7 +26,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
   const { to, subject, html, replyTo } = options;
 
   try {
-    const info = await transporter.sendMail({
+    const mailer = getTransporter();
+    const info = await mailer.sendMail({
       from: `Diablos Rojos Foto <${process.env.GMAIL_USER}>`,
       to,
       subject,
