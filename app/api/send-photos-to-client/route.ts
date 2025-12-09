@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/emailService';
-import { getPhotoDeliveryEmail } from '@/lib/email-templates';
+import { getPhotoDeliveryEmail } from '@/lib/email-delivery-template';
 import {
   generateDownloadLinks,
   markPhotosAsSent,
