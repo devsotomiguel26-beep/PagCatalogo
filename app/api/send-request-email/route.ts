@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
+import { sendMultipleEmails } from '@/lib/emailService';
 import {
   getPhotoRequestConfirmationEmail,
   getAdminNotificationEmail,
 } from '@/lib/email-templates';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@diablosrojosfoto.com';
 const adminEmail = process.env.ADMIN_EMAIL || 'admin@diablosrojosfoto.com';
 
 export async function POST(request: NextRequest) {
@@ -30,7 +28,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send confirmation email to client
+    // Preparar email de confirmación al cliente
     const clientEmailContent = getPhotoRequestConfirmationEmail({
       clientName,
       childName,
@@ -38,21 +36,7 @@ export async function POST(request: NextRequest) {
       photoCount,
     });
 
-    const clientEmailResult = await resend.emails.send({
-      from: fromEmail,
-      to: clientEmail,
-      subject: clientEmailContent.subject,
-      html: clientEmailContent.html,
-    });
-
-    console.log('Client email sent:', clientEmailResult);
-
-    // Check for email errors
-    if (clientEmailResult.error) {
-      console.error('Client email error:', clientEmailResult.error);
-    }
-
-    // Send notification email to admin
+    // Preparar email de notificación al admin
     const adminEmailContent = getAdminNotificationEmail({
       clientName,
       clientEmail,
@@ -63,29 +47,31 @@ export async function POST(request: NextRequest) {
       requestId,
     });
 
-    const adminEmailResult = await resend.emails.send({
-      from: fromEmail,
-      to: adminEmail,
-      subject: adminEmailContent.subject,
-      html: adminEmailContent.html,
-    });
+    // Enviar ambos emails usando Gmail SMTP
+    try {
+      await sendMultipleEmails([
+        {
+          to: clientEmail,
+          subject: clientEmailContent.subject,
+          html: clientEmailContent.html,
+        },
+        {
+          to: adminEmail,
+          subject: adminEmailContent.subject,
+          html: adminEmailContent.html,
+        },
+      ]);
 
-    console.log('Admin email sent:', adminEmailResult);
-
-    // Check for email errors
-    if (adminEmailResult.error) {
-      console.error('Admin email error:', adminEmailResult.error);
+      console.log('✅ Emails enviados exitosamente via Gmail SMTP');
+    } catch (emailError) {
+      console.error('⚠️ Error enviando emails (pero solicitud guardada):', emailError);
+      // No fallar la request completa si el email falla
     }
 
-    // Return success even if emails failed (request was saved to DB)
+    // Return success (request was saved to DB)
     return NextResponse.json({
       success: true,
-      clientEmailId: clientEmailResult.data?.id,
-      adminEmailId: adminEmailResult.data?.id,
-      warnings: {
-        clientEmailFailed: !!clientEmailResult.error,
-        adminEmailFailed: !!adminEmailResult.error,
-      },
+      emailsSent: true,
     });
   } catch (error: any) {
     console.error('Error sending emails:', error);

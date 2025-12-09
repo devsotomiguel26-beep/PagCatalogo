@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, DragEvent, ChangeEvent } from 'react';
-import { supabase } from '@/lib/supabaseClient';
 import Image from 'next/image';
 
 interface PhotoUploadAreaProps {
@@ -106,46 +105,29 @@ export default function PhotoUploadArea({ galleryId, onUploadComplete }: PhotoUp
       });
 
       try {
-        // Generar nombre de archivo único
-        const timestamp = Date.now();
-        const randomString = Math.random().toString(36).substring(7);
-        const fileExtension = fileData.file.name.split('.').pop();
-        const fileName = `${timestamp}-${randomString}.${fileExtension}`;
-        const storagePath = `galleries/${galleryId}/${fileName}`;
+        // Preparar FormData para enviar al API
+        const formData = new FormData();
+        formData.append('file', fileData.file);
+        formData.append('galleryId', galleryId);
 
-        // Subir a Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('gallery-images')
-          .upload(storagePath, fileData.file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
+        // Enviar al API route que procesa con marca de agua
+        const response = await fetch('/api/upload-photo', {
+          method: 'POST',
+          body: formData,
+        });
 
-        if (uploadError) {
-          throw uploadError;
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Error al subir la foto');
         }
 
-        // Obtener URL pública
-        const { data: urlData } = supabase.storage
-          .from('gallery-images')
-          .getPublicUrl(storagePath);
+        const result = await response.json();
 
-        if (!urlData.publicUrl) {
-          throw new Error('No se pudo obtener la URL pública');
+        if (!result.success) {
+          throw new Error('Error al procesar la foto');
         }
 
-        // Guardar en la base de datos
-        const { error: dbError } = await supabase.from('photos').insert([
-          {
-            gallery_id: galleryId,
-            storage_path: storagePath,
-            public_url: urlData.publicUrl,
-          },
-        ]);
-
-        if (dbError) {
-          throw dbError;
-        }
+        console.log('Foto subida con marca de agua:', result);
 
         // Actualizar estado a "success"
         setUploadingFiles((prev) => {

@@ -15,6 +15,8 @@ interface PhotoRequest {
   child_name: string;
   status: string;
   created_at: string;
+  photos_sent_at?: string;
+  download_links_expires_at?: string;
   galleries: {
     title: string;
     slug: string;
@@ -33,6 +35,8 @@ export default function SolicitudesPage() {
   const [selectedRequest, setSelectedRequest] = useState<PhotoRequest | null>(null);
   const [requestPhotos, setRequestPhotos] = useState<Photo[]>([]);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
+  const [sendingPhotos, setSendingPhotos] = useState(false);
+  const [confirmSendRequest, setConfirmSendRequest] = useState<PhotoRequest | null>(null);
 
   useEffect(() => {
     fetchRequests();
@@ -67,6 +71,32 @@ export default function SolicitudesPage() {
     setLoading(false);
   }
 
+  async function sendPhotosToClient(requestId: string) {
+    setSendingPhotos(true);
+    try {
+      const response = await fetch('/api/send-photos-to-client', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`✅ Fotos enviadas exitosamente. ${data.photosSent} fotos enviadas.`);
+        fetchRequests();
+      } else {
+        alert(`❌ Error al enviar fotos: ${data.error || 'Error desconocido'}`);
+      }
+    } catch (error) {
+      console.error('Error sending photos:', error);
+      alert('❌ Error al enviar fotos. Revisa la consola para más detalles.');
+    } finally {
+      setSendingPhotos(false);
+      setConfirmSendRequest(null);
+    }
+  }
+
   async function updateStatus(requestId: string, newStatus: string) {
     const { error } = await supabase
       .from('photo_requests')
@@ -80,6 +110,15 @@ export default function SolicitudesPage() {
       fetchRequests();
       if (selectedRequest?.id === requestId) {
         setSelectedRequest({ ...selectedRequest, status: newStatus });
+      }
+
+      // AUTO-SEND: Si cambia a "paid", enviar fotos automáticamente
+      if (newStatus === 'paid') {
+        const request = requests.find((r) => r.id === requestId);
+        if (request && !request.photos_sent_at) {
+          console.log('🚀 Auto-enviando fotos al cambiar estado a "Pagado"...');
+          await sendPhotosToClient(requestId);
+        }
       }
     }
   }
@@ -193,6 +232,9 @@ export default function SolicitudesPage() {
                       Estado
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Fotos Enviadas
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Acciones
                     </th>
                   </tr>
@@ -278,13 +320,48 @@ export default function SolicitudesPage() {
                           ))}
                         </select>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {request.photos_sent_at ? (
+                          <div className="flex flex-col">
+                            <span className="text-green-600 font-medium">✓ Enviadas</span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(request.photos_sent_at).toLocaleDateString('es-ES', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                              })}
+                            </span>
+                            {request.download_links_expires_at && (
+                              <span className="text-xs text-gray-400">
+                                Expiran: {new Date(request.download_links_expires_at).toLocaleDateString('es-ES', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                })}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">Pendiente</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => viewPhotos(request)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Ver fotos
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => viewPhotos(request)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Ver fotos
+                          </button>
+                          {request.status === 'paid' && !request.photos_sent_at && (
+                            <button
+                              onClick={() => setConfirmSendRequest(request)}
+                              disabled={sendingPhotos}
+                              className="ml-2 px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {sendingPhotos ? 'Enviando...' : 'Enviar Fotos'}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -362,6 +439,54 @@ export default function SolicitudesPage() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para enviar fotos */}
+      {confirmSendRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto bg-green-100 rounded-full mb-4">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
+                </svg>
+              </div>
+
+              <h3 className="text-lg font-bold text-gray-900 text-center mb-2">
+                Confirmar Envío de Fotos
+              </h3>
+
+              <div className="text-sm text-gray-600 mb-4">
+                <p className="mb-2">Estás a punto de enviar las fotos a:</p>
+                <ul className="space-y-1 bg-gray-50 p-3 rounded">
+                  <li><strong>Cliente:</strong> {confirmSendRequest.client_name}</li>
+                  <li><strong>Email:</strong> {confirmSendRequest.client_email}</li>
+                  <li><strong>Fotos:</strong> {confirmSendRequest.photo_ids.length}</li>
+                </ul>
+                <p className="mt-3 text-xs text-gray-500">
+                  Se generarán links de descarga válidos por 7 días.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmSendRequest(null)}
+                  disabled={sendingPhotos}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => sendPhotosToClient(confirmSendRequest.id)}
+                  disabled={sendingPhotos}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                >
+                  {sendingPhotos ? 'Enviando...' : 'Enviar Fotos'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
