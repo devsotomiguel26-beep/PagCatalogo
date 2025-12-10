@@ -1,19 +1,14 @@
-const nodemailer = require('nodemailer');
-
-// Gmail SMTP service for sending emails
-let transporter: any = null;
-
+// Dynamic import of nodemailer for serverless compatibility
 function getTransporter() {
-  if (!transporter) {
-    transporter = nodemailer.createTransporter({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
-  }
-  return transporter;
+  const nodemailer = require('nodemailer');
+
+  return nodemailer.createTransporter({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
 }
 
 interface SendEmailOptions {

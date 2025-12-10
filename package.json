@@ -1,7 +1,8 @@
 {
   "name": "diablos-rojos-foto",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
+  "buildTimestamp": "2025-12-10T18:10:00Z",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
