@@ -29,7 +29,7 @@ async function handleReturn(request: NextRequest) {
 
     if (!token) {
       console.error('❌ No se recibió token en el return');
-      return NextResponse.redirect(`${APP_URL}/pago/fallido`);
+      return createRedirectResponse(`${APP_URL}/pago/fallido`);
     }
 
     // Verificar el estado del pago
@@ -40,19 +40,96 @@ async function handleReturn(request: NextRequest) {
       flowOrder: paymentStatus.flowOrder,
     });
 
-    // Redirigir según el estado
+    // Determinar URL de redirección según el estado
+    let redirectUrl: string;
+
     if (paymentStatus.status === FLOW_STATUS.PAID) {
-      return NextResponse.redirect(`${APP_URL}/pago/exitoso`);
+      redirectUrl = `${APP_URL}/pago/exitoso`;
     } else if (paymentStatus.status === FLOW_STATUS.REJECTED) {
-      return NextResponse.redirect(`${APP_URL}/pago/fallido`);
+      redirectUrl = `${APP_URL}/pago/fallido`;
     } else if (paymentStatus.status === FLOW_STATUS.CANCELLED) {
-      return NextResponse.redirect(`${APP_URL}/pago/fallido`);
+      redirectUrl = `${APP_URL}/pago/fallido`;
     } else {
       // Pendiente u otro estado
-      return NextResponse.redirect(`${APP_URL}/pago/resultado?token=${token}`);
+      redirectUrl = `${APP_URL}/pago/resultado?token=${token}`;
     }
+
+    return createRedirectResponse(redirectUrl);
   } catch (error: any) {
     console.error('❌ Error procesando return de Flow:', error);
-    return NextResponse.redirect(`${APP_URL}/pago/fallido`);
+    return createRedirectResponse(`${APP_URL}/pago/fallido`);
   }
+}
+
+// Crear respuesta HTML con redirect automático (funciona con POST y GET)
+function createRedirectResponse(url: string) {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="refresh" content="0;url=${url}">
+        <title>Procesando pago...</title>
+        <style>
+          body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+          }
+          .container {
+            text-align: center;
+            color: white;
+          }
+          .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          h1 {
+            font-size: 24px;
+            margin: 0 0 10px 0;
+            font-weight: 600;
+          }
+          p {
+            font-size: 16px;
+            margin: 0;
+            opacity: 0.9;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="spinner"></div>
+          <h1>Procesando tu pago...</h1>
+          <p>Serás redirigido en un momento</p>
+        </div>
+        <script>
+          // Fallback si meta refresh no funciona
+          setTimeout(function() {
+            window.location.href = '${url}';
+          }, 100);
+        </script>
+      </body>
+    </html>
+  `;
+
+  return new NextResponse(html, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+    },
+  });
 }
