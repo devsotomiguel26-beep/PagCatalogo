@@ -16,21 +16,56 @@ export async function POST(request: NextRequest) {
     console.log(`🔵 [${timestamp}] Webhook Flow recibido`);
     console.log('Headers:', Object.fromEntries(request.headers.entries()));
     console.log('URL:', request.url);
+    console.log('Content-Type:', request.headers.get('content-type'));
 
-    // Obtener parámetros del webhook
-    const formData = await request.formData();
-    const params: Record<string, string> = {};
+    // Intentar leer como formData primero
+    let params: Record<string, string> = {};
 
-    formData.forEach((value, key) => {
-      params[key] = value.toString();
-    });
+    try {
+      const formData = await request.formData();
+      formData.forEach((value, key) => {
+        params[key] = value.toString();
+      });
+      console.log('✅ Leído como FormData');
+    } catch (formError) {
+      console.log('⚠️ No es FormData, intentando JSON...');
+      try {
+        const body = await request.json();
+        params = body;
+        console.log('✅ Leído como JSON');
+      } catch (jsonError) {
+        console.log('⚠️ No es JSON, intentando text...');
+        const text = await request.text();
+        console.log('Body raw:', text);
+
+        // Parsear manualmente si es URL encoded
+        if (text) {
+          const urlParams = new URLSearchParams(text);
+          urlParams.forEach((value, key) => {
+            params[key] = value;
+          });
+        }
+      }
+    }
 
     console.log('Parámetros recibidos:', Object.keys(params));
+    console.log('Parámetros completos:', JSON.stringify(params, null, 2));
+
     const { token, s: signature } = params;
 
     if (!token || !signature) {
       console.error('❌ Token o firma faltante');
-      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+      console.error('Token:', token ? 'PRESENTE' : 'AUSENTE');
+      console.error('Signature:', signature ? 'PRESENTE' : 'AUSENTE');
+      console.error('Todos los params:', params);
+      return NextResponse.json({
+        error: 'Invalid request',
+        debug: {
+          hasToken: !!token,
+          hasSignature: !!signature,
+          receivedKeys: Object.keys(params)
+        }
+      }, { status: 400 });
     }
 
     console.log('🔐 Verificando firma...');
