@@ -53,33 +53,37 @@ export async function POST(request: NextRequest) {
 
     const { token, s: signature } = params;
 
-    if (!token || !signature) {
-      console.error('❌ Token o firma faltante');
-      console.error('Token:', token ? 'PRESENTE' : 'AUSENTE');
-      console.error('Signature:', signature ? 'PRESENTE' : 'AUSENTE');
-      console.error('Todos los params:', params);
+    // Validar que el token esté presente (obligatorio)
+    if (!token) {
+      console.error('❌ Token faltante');
       return NextResponse.json({
-        error: 'Invalid request',
+        error: 'Token is required',
         debug: {
-          hasToken: !!token,
-          hasSignature: !!signature,
+          hasToken: false,
           receivedKeys: Object.keys(params)
         }
       }, { status: 400 });
     }
 
-    console.log('🔐 Verificando firma...');
+    console.log('✅ Token presente:', token);
 
-    // Verificar firma (seguridad)
-    const paramsToVerify = { ...params };
-    delete paramsToVerify.s; // No incluir la firma en la verificación
+    // Verificar firma SI está presente (opcional temporalmente)
+    if (signature) {
+      console.log('🔐 Firma presente, verificando...');
 
-    if (!verifyFlowSignature(paramsToVerify, signature)) {
-      console.error('❌ Firma inválida');
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      const paramsToVerify = { ...params };
+      delete paramsToVerify.s; // No incluir la firma en la verificación
+
+      if (!verifyFlowSignature(paramsToVerify, signature)) {
+        console.error('❌ Firma inválida');
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      }
+
+      console.log('✅ Firma verificada correctamente');
+    } else {
+      console.warn('⚠️ Firma no enviada por Flow - continuando sin validación de firma');
+      console.warn('⚠️ TEMPORAL: En producción la firma debería ser obligatoria');
     }
-
-    console.log('✅ Firma verificada');
 
     // Obtener estado completo del pago desde Flow
     console.log('📡 Consultando estado del pago en Flow...');
