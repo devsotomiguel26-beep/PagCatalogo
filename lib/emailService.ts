@@ -1,6 +1,7 @@
+// @ts-ignore - Force rebuild without cache
 import * as nodemailer from 'nodemailer';
 
-// Gmail SMTP service for sending emails
+// Gmail SMTP service for sending emails (Force cache clear - Build v2)
 let transporter: nodemailer.Transporter | null = null;
 
 function getTransporter() {
