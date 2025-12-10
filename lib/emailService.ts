@@ -1,15 +1,7 @@
-// Dynamic import of nodemailer for serverless compatibility
-function getTransporter() {
-  const nodemailer = require('nodemailer');
+import { Resend } from 'resend';
 
-  return nodemailer.createTransporter({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  });
-}
+// Initialize Resend with API key
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface SendEmailOptions {
   to: string;
@@ -22,19 +14,21 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
   const { to, subject, html, replyTo } = options;
 
   try {
-    const mailer = getTransporter();
-    const info = await mailer.sendMail({
-      from: `Diablos Rojos Foto <${process.env.GMAIL_USER}>`,
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+
+    const result = await resend.emails.send({
+      from: fromEmail,
       to,
       subject,
       html,
-      replyTo: replyTo || process.env.GMAIL_USER,
+      replyTo: replyTo || fromEmail,
     });
 
-    console.log('✅ Email enviado exitosamente via Gmail SMTP');
-    return info;
+    console.log('✅ Email enviado exitosamente via Resend');
+    console.log('Email ID:', result.data?.id);
+    return;
   } catch (error) {
-    console.error('❌ Error enviando email via Gmail SMTP:', error);
+    console.error('❌ Error enviando email via Resend:', error);
     throw error;
   }
 }
