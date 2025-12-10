@@ -11,7 +11,11 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔵 Webhook Flow recibido');
+    const timestamp = new Date().toISOString();
+    console.log('='.repeat(80));
+    console.log(`🔵 [${timestamp}] Webhook Flow recibido`);
+    console.log('Headers:', Object.fromEntries(request.headers.entries()));
+    console.log('URL:', request.url);
 
     // Obtener parámetros del webhook
     const formData = await request.formData();
@@ -21,6 +25,7 @@ export async function POST(request: NextRequest) {
       params[key] = value.toString();
     });
 
+    console.log('Parámetros recibidos:', Object.keys(params));
     const { token, s: signature } = params;
 
     if (!token || !signature) {
@@ -188,6 +193,18 @@ export async function POST(request: NextRequest) {
 }
 
 // Flow también puede enviar GET para verificar la URL
-export async function GET() {
-  return NextResponse.json({ status: 'ok', service: 'Flow webhook' });
+export async function GET(request: NextRequest) {
+  const timestamp = new Date().toISOString();
+  console.log('='.repeat(80));
+  console.log(`🟢 [${timestamp}] GET request a webhook Flow`);
+  console.log('Headers:', Object.fromEntries(request.headers.entries()));
+  console.log('URL:', request.url);
+  console.log('='.repeat(80));
+
+  return NextResponse.json({
+    status: 'ok',
+    service: 'Flow webhook',
+    timestamp,
+    ready: true
+  });
 }
