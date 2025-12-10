@@ -1,5 +1,6 @@
 import * as nodemailer from 'nodemailer';
 
+// Gmail SMTP service for sending emails
 let transporter: nodemailer.Transporter | null = null;
 
 function getTransporter() {

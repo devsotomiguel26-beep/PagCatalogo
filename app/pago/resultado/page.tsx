@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
-export default function PaymentResultPage() {
+function PaymentResultContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -67,5 +67,22 @@ export default function PaymentResultPage() {
         <p className="text-gray-600">{message}</p>
       </div>
     </div>
+  );
+}
+
+export default function PaymentResultPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
+          <LoadingSpinner size="large" />
+          <h2 className="text-2xl font-bold text-gray-900 mt-6 mb-2">
+            Cargando...
+          </h2>
+        </div>
+      </div>
+    }>
+      <PaymentResultContent />
+    </Suspense>
   );
 }
