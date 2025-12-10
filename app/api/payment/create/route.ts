@@ -3,7 +3,7 @@ import { createFlowPayment } from '@/lib/flowPayment';
 import { supabase } from '@/lib/supabaseClient';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-const PRICE_PER_PHOTO = 2000; // $2000 CLP por foto
+const PRICE_PER_PHOTO = parseInt(process.env.PRICE_PER_PHOTO || '2000', 10); // Configurable via env
 
 export async function POST(request: NextRequest) {
   try {
