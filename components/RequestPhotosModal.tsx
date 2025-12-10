@@ -176,7 +176,7 @@ export default function RequestPhotosModal({
                 disabled={isSubmitting}
               />
               <p className="text-xs text-gray-500 mt-1">
-                Te contactaremos para coordinar el pago
+                Para cualquier consulta sobre tu pedido
               </p>
             </div>
 
@@ -205,9 +205,10 @@ export default function RequestPhotosModal({
                 <div className="text-sm text-blue-800">
                   <p className="font-medium mb-1">¿Qué sucede después?</p>
                   <ul className="space-y-1 text-blue-700">
-                    <li>• Recibirás un email de confirmación</li>
-                    <li>• Te contactaremos para coordinar el pago</li>
-                    <li>• Una vez pagado, recibirás las fotos en alta resolución sin marca de agua</li>
+                    <li>• Serás redirigido a la pasarela de pago segura (Flow)</li>
+                    <li>• Puedes pagar con tarjeta de crédito, débito o transferencia</li>
+                    <li>• Una vez confirmado el pago, recibirás las fotos automáticamente por email</li>
+                    <li>• Las fotos estarán en alta resolución sin marca de agua</li>
                   </ul>
                 </div>
               </div>
@@ -237,7 +238,7 @@ export default function RequestPhotosModal({
                     Enviando...
                   </span>
                 ) : (
-                  'Enviar Solicitud'
+                  'Ir al Pago'
                 )}
               </button>
             </div>

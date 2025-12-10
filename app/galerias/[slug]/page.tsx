@@ -170,6 +170,7 @@ export default function GaleriaPage() {
     try {
       const photoIds = Array.from(favorites);
 
+      // 1. Crear solicitud en la base de datos
       const { data: insertedData, error } = await supabase
         .from('photo_requests')
         .insert([
@@ -190,7 +191,7 @@ export default function GaleriaPage() {
         throw error;
       }
 
-      // Enviar emails de confirmación
+      // 2. Enviar emails de confirmación
       try {
         await fetch('/api/send-request-email', {
           method: 'POST',
@@ -208,24 +209,34 @@ export default function GaleriaPage() {
           }),
         });
       } catch (emailError) {
-        // No fallar si el email no se envía, solo log
         console.error('Error sending confirmation emails:', emailError);
       }
 
-      // Mostrar toast de éxito
-      setToast({
-        message: '¡Solicitud enviada! Recibirás un email de confirmación pronto.',
-        type: 'success',
+      // 3. Crear pago en Flow
+      const paymentResponse = await fetch('/api/payment/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          requestId: insertedData.id,
+        }),
       });
 
-      // Limpiar favoritos después de enviar
+      if (!paymentResponse.ok) {
+        throw new Error('Error al crear el pago');
+      }
+
+      const paymentData = await paymentResponse.json();
+
+      // 4. Limpiar favoritos antes de redirigir
       setFavorites(new Set());
       if (gallery) {
         localStorage.removeItem(`favorites_${gallery.id}`);
       }
 
-      // Cerrar modal
-      setRequestModalOpen(false);
+      // 5. Redirigir a Flow para el pago
+      window.location.href = paymentData.paymentUrl;
     } catch (error: any) {
       console.error('Error submitting request:', error);
       throw new Error(error.message || 'Error al enviar la solicitud');
