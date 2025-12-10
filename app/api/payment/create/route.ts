@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       amount: amount,
       email: photoRequest.client_email,
       urlConfirmation: `${APP_URL}/api/webhooks/flow`,
-      urlReturn: `${APP_URL}/pago/resultado`,
+      urlReturn: `${APP_URL}/api/payment/return`,
     });
 
     console.log('✅ Pago Flow creado:', flowPayment.flowOrder);
