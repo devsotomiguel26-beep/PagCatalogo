@@ -126,39 +126,33 @@ export default function GaleriasPage() {
   }, [selectedCategory, selectedEventType]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-accent-warm">
+    <div className="min-h-screen flex flex-col bg-white">
       <Header />
 
       <main className="flex-grow">
-        {/* Hero section */}
-        <section className="bg-gradient-to-br from-devil-900 via-devil-700 to-devil-600 text-white py-16 md:py-20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-4 animate-slide-down">
-              GALERÍAS
+        {/* Hero section - minimalista */}
+        <section className="bg-white py-16 md:py-20 border-b border-gray-100">
+          <div className="max-w-6xl mx-auto px-8 lg:px-12">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-gray-900 mb-6 tracking-tight">
+              Galerías
             </h1>
-            <p className="text-xl md:text-2xl text-devil-100 max-w-3xl">
-              Explora nuestras galerías de partidos, torneos y eventos deportivos. Encuentra tus mejores momentos.
+            <p className="text-lg md:text-xl text-gray-600 max-w-3xl font-light leading-relaxed">
+              Explora nuestras galerías de partidos, torneos y eventos deportivos
             </p>
           </div>
         </section>
 
-        {/* Filtros */}
-        <section className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex flex-col md:flex-row gap-6">
+        {/* Filtros - minimalista */}
+        <section className="bg-gray-50 border-b border-gray-100">
+          <div className="max-w-6xl mx-auto px-8 lg:px-12 py-8">
+            <div className="flex flex-col sm:flex-row gap-4">
               {/* Filtro por categoría */}
               <div className="flex-1">
-                <label
-                  htmlFor="category-filter"
-                  className="block text-sm font-semibold text-gray-700 mb-3"
-                >
-                  Categoría
-                </label>
                 <select
                   id="category-filter"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-devil-500 focus:border-devil-500 transition-all duration-200 bg-white font-medium text-gray-700"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-devil-600 focus:border-devil-600 transition-all bg-white text-sm text-gray-700"
                 >
                   <option value="all">Todas las categorías</option>
                   {categories.map((category) => (
@@ -171,17 +165,11 @@ export default function GaleriasPage() {
 
               {/* Filtro por tipo de evento */}
               <div className="flex-1">
-                <label
-                  htmlFor="event-filter"
-                  className="block text-sm font-semibold text-gray-700 mb-3"
-                >
-                  Tipo de Evento
-                </label>
                 <select
                   id="event-filter"
                   value={selectedEventType}
                   onChange={(e) => setSelectedEventType(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-devil-500 focus:border-devil-500 transition-all duration-200 bg-white font-medium text-gray-700"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-devil-600 focus:border-devil-600 transition-all bg-white text-sm text-gray-700"
                 >
                   {eventTypes.map((type) => (
                     <option key={type.value} value={type.value}>
@@ -194,23 +182,22 @@ export default function GaleriasPage() {
           </div>
         </section>
 
-        {/* Grid de galerías */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Grid de galerías - espaciado generoso */}
+        <section className="max-w-6xl mx-auto px-8 lg:px-12 py-16 lg:py-20">
           {loading ? (
-            <GalleryGrid>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 lg:gap-x-12 lg:gap-y-16">
               {Array.from({ length: 6 }).map((_, index) => (
                 <GalleryCardSkeleton key={index} />
               ))}
-            </GalleryGrid>
+            </div>
           ) : galleries.length > 0 ? (
             <>
-              <div className="mb-6">
-                <p className="text-gray-600">
-                  Mostrando {galleries.length}{' '}
-                  {galleries.length === 1 ? 'galería' : 'galerías'}
+              <div className="mb-10">
+                <p className="text-sm text-gray-500">
+                  {galleries.length} {galleries.length === 1 ? 'galería' : 'galerías'}
                 </p>
               </div>
-              <GalleryGrid>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 lg:gap-x-12 lg:gap-y-16">
                 {galleries.map((gallery) => (
                   <GalleryCard
                     key={gallery.id}
@@ -224,28 +211,28 @@ export default function GaleriasPage() {
                     photoCount={gallery.photos.length}
                   />
                 ))}
-              </GalleryGrid>
+              </div>
             </>
           ) : (
-            <div className="text-center py-20">
+            <div className="text-center py-32">
               <svg
-                className="mx-auto h-12 w-12 text-gray-400"
+                className="mx-auto h-16 w-16 text-gray-300"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                strokeWidth={1}
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
                   d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                 />
               </svg>
-              <h3 className="mt-2 text-lg font-medium text-gray-900">
+              <h3 className="mt-6 text-lg font-medium text-gray-900">
                 No hay galerías disponibles
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                No se encontraron galerías con los filtros seleccionados.
+              <p className="mt-2 text-sm text-gray-500">
+                No se encontraron galerías con los filtros seleccionados
               </p>
             </div>
           )}

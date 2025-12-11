@@ -29,47 +29,25 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Bebas Neue', 'Impact', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
       boxShadow: {
-        'premium': '0 10px 40px -10px rgba(0, 0, 0, 0.25)',
-        'premium-lg': '0 20px 60px -15px rgba(0, 0, 0, 0.3)',
-        'glow-red': '0 0 20px rgba(220, 38, 38, 0.3)',
-        'inner-subtle': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)',
+        'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
+        'card': '0 2px 8px 0 rgba(0, 0, 0, 0.06)',
+        'hover': '0 4px 12px 0 rgba(0, 0, 0, 0.08)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.3s ease-out',
-        'slide-up': 'slideUp 0.4s ease-out',
-        'slide-down': 'slideDown 0.4s ease-out',
-        'scale-in': 'scaleIn 0.3s ease-out',
+        'fade-in': 'fadeIn 0.4s ease-out',
         'shimmer': 'shimmer 2s infinite',
-        'float': 'float 3s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
-        slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        slideDown: {
-          '0%': { opacity: '0', transform: 'translateY(-20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        scaleIn: {
-          '0%': { opacity: '0', transform: 'scale(0.95)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
-        },
         shimmer: {
           '0%': { backgroundPosition: '-1000px 0' },
           '100%': { backgroundPosition: '1000px 0' },
-        },
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
         },
       },
     },
