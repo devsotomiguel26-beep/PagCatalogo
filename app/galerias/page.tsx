@@ -126,39 +126,39 @@ export default function GaleriasPage() {
   }, [selectedCategory, selectedEventType]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-accent-warm">
       <Header />
 
       <main className="flex-grow">
         {/* Hero section */}
-        <section className="bg-gradient-to-br from-red-600 to-red-800 text-white py-12">
+        <section className="bg-gradient-to-br from-devil-900 via-devil-700 to-devil-600 text-white py-16 md:py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Galerías de Fotos
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-4 animate-slide-down">
+              GALERÍAS
             </h1>
-            <p className="text-xl text-red-100">
-              Explora nuestras galerías de partidos, torneos y eventos deportivos
+            <p className="text-xl md:text-2xl text-devil-100 max-w-3xl">
+              Explora nuestras galerías de partidos, torneos y eventos deportivos. Encuentra tus mejores momentos.
             </p>
           </div>
         </section>
 
         {/* Filtros */}
-        <section className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex flex-col md:flex-row gap-4">
+        <section className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex flex-col md:flex-row gap-6">
               {/* Filtro por categoría */}
               <div className="flex-1">
                 <label
                   htmlFor="category-filter"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-semibold text-gray-700 mb-3"
                 >
-                  Filtrar por categoría
+                  Categoría
                 </label>
                 <select
                   id="category-filter"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-devil-500 focus:border-devil-500 transition-all duration-200 bg-white font-medium text-gray-700"
                 >
                   <option value="all">Todas las categorías</option>
                   {categories.map((category) => (
@@ -173,15 +173,15 @@ export default function GaleriasPage() {
               <div className="flex-1">
                 <label
                   htmlFor="event-filter"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  className="block text-sm font-semibold text-gray-700 mb-3"
                 >
-                  Filtrar por tipo de evento
+                  Tipo de Evento
                 </label>
                 <select
                   id="event-filter"
                   value={selectedEventType}
                   onChange={(e) => setSelectedEventType(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-devil-500 focus:border-devil-500 transition-all duration-200 bg-white font-medium text-gray-700"
                 >
                   {eventTypes.map((type) => (
                     <option key={type.value} value={type.value}>
