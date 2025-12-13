@@ -9,6 +9,9 @@ Plataforma web para mostrar y gestionar galerías de fotos deportivas de fútbol
 - **Base de datos**: Supabase (PostgreSQL)
 - **Autenticación**: Supabase Auth
 - **Almacenamiento**: Supabase Storage
+- **Procesamiento de Imágenes**: Sharp (watermarks)
+- **Pasarela de Pago**: Flow Chile
+- **Emails**: Resend
 - **Despliegue**: Vercel
 
 ## Configuración Inicial
@@ -129,13 +132,38 @@ USING ( bucket_id = 'gallery-images' AND auth.role() = 'authenticated' );
    NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key-aqui
    ```
 
-### 4. Ejecutar el proyecto
+### 4. Configurar sistema de marcas de agua
+
+#### 4.1. Ejecutar migración SQL
+
+Ve a SQL Editor en Supabase y ejecuta:
+
+```bash
+# Contenido de supabase-migration-watermark.sql
+ALTER TABLE photos ADD COLUMN IF NOT EXISTS original_path TEXT;
+```
+
+#### 4.2. Agregar logo de marca de agua
+
+1. Coloca el logo de Diablos Rojos en formato PNG con fondo transparente
+2. Guárdalo en: `/public/watermark/logo.png`
+3. Tamaño recomendado: 1500px - 2000px de ancho
+
+**Verificación:**
+```bash
+ls -lh public/watermark/logo.png
+# Debe existir el archivo
+```
+
+📖 **Documentación completa:** Ver `INSTRUCCIONES_WATERMARK.md`
+
+### 5. Ejecutar el proyecto
 
 ```bash
 npm run dev
 ```
 
-### 5. Abrir en el navegador
+### 6. Abrir en el navegador
 
 - **Sitio público**: http://localhost:3000
 - **Panel admin**: http://localhost:3000/admin/login

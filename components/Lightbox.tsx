@@ -59,46 +59,47 @@ export default function Lightbox({
   if (!currentPhoto) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-95 flex items-center justify-center animate-fadeIn">
-      {/* Botón cerrar */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 p-2 text-white hover:bg-gray-800 rounded-full transition-colors z-10"
-        aria-label="Cerrar"
-      >
-        <svg
-          className="w-8 h-8"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
+    <div className="fixed inset-0 z-50 bg-white flex items-center justify-center animate-fade-in">
+      {/* Header minimalista */}
+      <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-8 z-10 bg-white border-b border-gray-100">
+        {/* Contador */}
+        <span className="text-sm text-gray-500">
+          {currentIndex + 1} / {photos.length}
+        </span>
 
-      {/* Barra superior con favorito y contador */}
-      <div className="absolute top-4 left-4 right-20 flex items-center justify-between z-10">
-        <div className="flex items-center space-x-4">
+        {/* Botón favorito + cerrar */}
+        <div className="flex items-center gap-4">
           <FavoriteButton
             isFavorite={favorites.has(currentPhoto.id)}
             onToggle={() => onToggleFavorite(currentPhoto.id)}
           />
-          <span className="text-white text-sm">
-            {currentIndex + 1} / {photos.length}
-          </span>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+            aria-label="Cerrar"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
         </div>
       </div>
 
-      {/* Botón anterior */}
+      {/* Navegación minimalista */}
       {!isFirst && (
         <button
           onClick={onPrevious}
-          className="absolute left-4 p-3 bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full text-white transition-all z-10"
+          className="absolute left-6 p-3 text-gray-400 hover:text-gray-900 transition-colors z-10"
           aria-label="Foto anterior"
         >
           <svg
@@ -106,36 +107,36 @@ export default function Lightbox({
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            strokeWidth={1.5}
           >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
               d="M15 19l-7-7 7-7"
             />
           </svg>
         </button>
       )}
 
-      {/* Imagen principal */}
-      <div className="relative w-full h-full flex items-center justify-center p-4">
-        <div className="relative max-w-7xl max-h-full w-full h-full">
+      {/* Imagen principal - fondo blanco */}
+      <div className="relative w-full h-full flex items-center justify-center pt-16">
+        <div className="relative max-w-6xl max-h-full w-full h-full p-8">
           <Image
             src={currentPhoto.public_url}
             alt={`Foto ${currentIndex + 1}`}
             fill
             className="object-contain"
             sizes="100vw"
+            quality={90}
             priority
           />
         </div>
       </div>
 
-      {/* Botón siguiente */}
       {!isLast && (
         <button
           onClick={onNext}
-          className="absolute right-4 p-3 bg-black bg-opacity-50 hover:bg-opacity-75 rounded-full text-white transition-all z-10"
+          className="absolute right-6 p-3 text-gray-400 hover:text-gray-900 transition-colors z-10"
           aria-label="Foto siguiente"
         >
           <svg
@@ -143,18 +144,18 @@ export default function Lightbox({
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            strokeWidth={1.5}
           >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
               d="M9 5l7 7-7 7"
             />
           </svg>
         </button>
       )}
 
-      {/* Overlay clickeable para cerrar */}
+      {/* Click en background para cerrar */}
       <div
         className="absolute inset-0 -z-10"
         onClick={onClose}

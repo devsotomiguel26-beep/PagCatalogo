@@ -253,25 +253,18 @@ export default function GaleriaPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="min-h-screen flex flex-col bg-white">
         <Header />
         <main className="flex-grow">
-          <section className="bg-white border-b">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <div className="animate-pulse space-y-4">
-                <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-                <div className="flex gap-3">
-                  <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
-                  <div className="h-6 w-24 bg-gray-200 rounded-full"></div>
-                </div>
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                </div>
+          <section className="border-b border-gray-100">
+            <div className="max-w-6xl mx-auto px-8 lg:px-12 py-12 lg:py-16">
+              <div className="animate-pulse space-y-6">
+                <div className="h-10 bg-gray-100 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-100 rounded w-1/4"></div>
               </div>
             </div>
           </section>
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <section className="max-w-6xl mx-auto px-8 lg:px-12 py-12 lg:py-16">
             <PhotoGridSkeleton count={12} />
           </section>
         </main>
@@ -285,140 +278,73 @@ export default function GaleriaPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-white">
       <Header />
 
       <main className="flex-grow">
-        {/* Hero/Header de la galería */}
-        <section className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Breadcrumb */}
-            <nav className="mb-4">
-              <ol className="flex items-center space-x-2 text-sm text-gray-600">
+        {/* Hero/Header minimalista */}
+        <section className="border-b border-gray-100">
+          <div className="max-w-6xl mx-auto px-8 lg:px-12 py-12 lg:py-16">
+            {/* Breadcrumb minimalista */}
+            <nav className="mb-8">
+              <ol className="flex items-center space-x-2 text-sm text-gray-400">
                 <li>
-                  <a href="/" className="hover:text-red-600">
+                  <a href="/" className="hover:text-devil-600 transition-colors">
                     Inicio
                   </a>
                 </li>
-                <li>/</li>
+                <li>·</li>
                 <li>
-                  <a href="/galerias" className="hover:text-red-600">
+                  <a href="/galerias" className="hover:text-devil-600 transition-colors">
                     Galerías
                   </a>
                 </li>
-                <li>/</li>
-                <li className="text-gray-900 font-medium">{gallery.title}</li>
+                <li>·</li>
+                <li className="text-gray-900">{gallery.title}</li>
               </ol>
             </nav>
 
-            {/* Título y metadatos */}
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            {/* Título - tipografía light */}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-light text-gray-900 mb-6 tracking-tight">
               {gallery.title}
             </h1>
 
-            <div className="flex flex-wrap gap-3 mb-4">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                {gallery.categories.name}
-              </span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 capitalize">
-                {gallery.event_type}
-              </span>
-            </div>
-
-            <div className="space-y-2 text-gray-700">
-              <div className="flex items-center">
-                <svg
-                  className="w-5 h-5 mr-2 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                {formattedDate}
-              </div>
-
+            {/* Metadata en una línea - minimalista */}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-8">
+              <span className="capitalize">{gallery.event_type}</span>
               {gallery.tournament && (
-                <div className="flex items-center">
-                  <svg
-                    className="w-5 h-5 mr-2 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-                    />
-                  </svg>
-                  {gallery.tournament}
-                </div>
+                <>
+                  <span>·</span>
+                  <span>{gallery.tournament}</span>
+                </>
               )}
-
+              <span>·</span>
+              <span>{formattedDate}</span>
               {gallery.location && (
-                <div className="flex items-center">
-                  <svg
-                    className="w-5 h-5 mr-2 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                  {gallery.location}
-                </div>
+                <>
+                  <span>·</span>
+                  <span>{gallery.location}</span>
+                </>
               )}
             </div>
 
-            {/* Contador de favoritas */}
-            {favorites.size > 0 && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg inline-block">
-                <div className="flex items-center text-red-800">
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                  </svg>
-                  <span className="font-medium">
-                    {favorites.size} {favorites.size === 1 ? 'foto marcada' : 'fotos marcadas'} como
-                    favorita{favorites.size !== 1 ? 's' : ''}
+            {/* Contador de fotos y favoritas */}
+            <div className="flex items-center gap-6 text-sm text-gray-500">
+              <span>{photos.length} {photos.length === 1 ? 'foto' : 'fotos'}</span>
+              {favorites.size > 0 && (
+                <>
+                  <span>·</span>
+                  <span className="text-devil-600 font-medium">
+                    {favorites.size} seleccionada{favorites.size !== 1 ? 's' : ''}
                   </span>
-                </div>
-              </div>
-            )}
+                </>
+              )}
+            </div>
           </div>
         </section>
 
-        {/* Grid de fotos */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {photos.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {photos.length} {photos.length === 1 ? 'foto' : 'fotos'}
-              </h2>
-            </div>
-          )}
-
+        {/* Grid de fotos - espaciado generoso */}
+        <section className="max-w-6xl mx-auto px-8 lg:px-12 py-12 lg:py-16">
           <PhotoGrid
             photos={photos}
             onPhotoClick={openLightbox}

@@ -38,6 +38,7 @@ export default function GalleryCard({
             fill
             className="object-cover hover-subtle"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            quality={80}
           />
         ) : (
           <div className="flex items-center justify-center h-full">
