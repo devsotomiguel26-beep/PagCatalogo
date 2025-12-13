@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 import { processForCatalog, processOriginal } from '@/lib/watermark';
 
+// Crear cliente Supabase con permisos de admin para server-side
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 export const runtime = 'nodejs';
-export const maxDuration = 60; // 60 segundos para procesar imágenes
+// maxDuration limitado a 10s en Vercel Hobby plan
+// Si tienes Vercel Pro, puedes aumentar a 60
 
 /**
  * Endpoint para subir fotos con marca de agua
@@ -17,10 +23,23 @@ export const maxDuration = 60; // 60 segundos para procesar imágenes
  * 5. Guarda registro en BD con ambos paths
  */
 export async function POST(request: NextRequest) {
+  console.log('🚀 Inicio de upload-photo endpoint');
+
   try {
+    // Verificar que las credenciales de Supabase estén configuradas
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('❌ Credenciales de Supabase no configuradas');
+      return NextResponse.json(
+        { error: 'Configuración de servidor incompleta' },
+        { status: 500 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const galleryId = formData.get('galleryId') as string;
+
+    console.log(`📋 FormData recibido - File: ${file?.name}, GalleryId: ${galleryId}`);
 
     if (!file) {
       return NextResponse.json(
@@ -49,6 +68,7 @@ export async function POST(request: NextRequest) {
     // Convertir File a Buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+    console.log('✅ Buffer creado exitosamente');
 
     // Generar nombres únicos
     const timestamp = Date.now();
@@ -58,13 +78,41 @@ export async function POST(request: NextRequest) {
 
     // 1. Procesar versión ORIGINAL (sin watermark, alta calidad)
     console.log('🔧 Procesando versión original...');
-    const originalBuffer = await processOriginal(buffer);
+    let originalBuffer;
+    try {
+      originalBuffer = await processOriginal(buffer);
+      console.log('✅ Versión original procesada');
+    } catch (error: any) {
+      console.error('❌ Error procesando original:', error);
+      return NextResponse.json(
+        {
+          error: 'Error procesando imagen original',
+          details: error.message,
+        },
+        { status: 500 }
+      );
+    }
+
     const originalFileName = `${baseFileName}-original.${fileExtension}`;
     const originalPath = `galleries/${galleryId}/originals/${originalFileName}`;
 
     // 2. Procesar versión CATÁLOGO (con watermark)
     console.log('💧 Aplicando marca de agua...');
-    const catalogBuffer = await processForCatalog(buffer);
+    let catalogBuffer;
+    try {
+      catalogBuffer = await processForCatalog(buffer);
+      console.log('✅ Marca de agua aplicada');
+    } catch (error: any) {
+      console.error('❌ Error aplicando watermark:', error);
+      return NextResponse.json(
+        {
+          error: 'Error aplicando marca de agua',
+          details: error.message,
+        },
+        { status: 500 }
+      );
+    }
+
     const catalogFileName = `${baseFileName}-catalog.jpg`; // Siempre JPG para catálogo
     const catalogPath = `galleries/${galleryId}/${catalogFileName}`;
 
@@ -113,18 +161,44 @@ export async function POST(request: NextRequest) {
 
     // 6. Guardar en la base de datos
     console.log('💾 Guardando en base de datos...');
-    const { data: photoData, error: dbError } = await supabase
-      .from('photos')
-      .insert([
-        {
-          gallery_id: galleryId,
-          storage_path: catalogPath,      // Foto CON watermark (galería pública)
-          original_path: originalPath,     // Foto SIN watermark (post-compra)
-          public_url: urlData.publicUrl,
-        },
-      ])
-      .select()
-      .single();
+
+    // Intentar primero con original_path (si existe la columna)
+    let photoData;
+    let dbError;
+
+    const insertData: any = {
+      gallery_id: galleryId,
+      storage_path: catalogPath,
+      public_url: urlData.publicUrl,
+    };
+
+    // Intentar agregar original_path solo si la columna existe
+    try {
+      const result = await supabase
+        .from('photos')
+        .insert([
+          {
+            ...insertData,
+            original_path: originalPath,
+          },
+        ])
+        .select()
+        .single();
+
+      photoData = result.data;
+      dbError = result.error;
+    } catch (error: any) {
+      // Si falla (probablemente porque original_path no existe), intentar sin ella
+      console.warn('⚠️  Columna original_path no existe, insertando sin ella...');
+      const result = await supabase
+        .from('photos')
+        .insert([insertData])
+        .select()
+        .single();
+
+      photoData = result.data;
+      dbError = result.error;
+    }
 
     if (dbError) {
       console.error('❌ Error guardando en BD:', dbError);
