@@ -86,6 +86,57 @@ export default function PhotoUploadArea({ galleryId, onUploadComplete }: PhotoUp
     });
   };
 
+  // Función para redimensionar imagen en el cliente
+  const resizeImage = (file: File, maxWidth: number = 2000): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new window.Image();
+        img.onload = () => {
+          // Calcular nuevo tamaño manteniendo aspect ratio
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          // Crear canvas
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('No se pudo crear canvas'));
+            return;
+          }
+
+          // Dibujar imagen redimensionada
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convertir a Blob con calidad 85%
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error('Error al crear blob'));
+              }
+            },
+            'image/jpeg',
+            0.85
+          );
+        };
+        img.onerror = () => reject(new Error('Error al cargar imagen'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Error al leer archivo'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const uploadFiles = async () => {
     if (uploadingFiles.length === 0) return;
 
@@ -105,9 +156,19 @@ export default function PhotoUploadArea({ galleryId, onUploadComplete }: PhotoUp
       });
 
       try {
+        // Redimensionar imagen en el cliente si es muy grande (>3MB)
+        let fileToUpload: File | Blob = fileData.file;
+        const maxSizeBytes = 3 * 1024 * 1024; // 3 MB
+
+        if (fileData.file.size > maxSizeBytes) {
+          console.log(`📏 Imagen muy grande (${(fileData.file.size / 1024 / 1024).toFixed(2)}MB), redimensionando...`);
+          fileToUpload = await resizeImage(fileData.file);
+          console.log(`✅ Imagen redimensionada a ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`);
+        }
+
         // Crear FormData para enviar al endpoint
         const formData = new FormData();
-        formData.append('file', fileData.file);
+        formData.append('file', fileToUpload, fileData.file.name);
         formData.append('galleryId', galleryId);
 
         // Enviar al endpoint de procesamiento con watermark
@@ -117,7 +178,9 @@ export default function PhotoUploadArea({ galleryId, onUploadComplete }: PhotoUp
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = await response.json().catch(() => ({
+            error: `Error ${response.status}: ${response.statusText}`
+          }));
           throw new Error(errorData.error || 'Error al procesar la foto');
         }
 
