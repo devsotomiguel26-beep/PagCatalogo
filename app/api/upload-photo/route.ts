@@ -35,66 +35,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const galleryId = formData.get('galleryId') as string;
+    // Leer JSON body
+    const body = await request.json();
+    const { originalPath, galleryId, fileName } = body;
 
-    console.log(`📋 FormData recibido - File: ${file?.name}, GalleryId: ${galleryId}`);
+    console.log(`📋 Procesando - OriginalPath: ${originalPath}, GalleryId: ${galleryId}`);
 
-    if (!file) {
+    if (!originalPath || !galleryId || !fileName) {
       return NextResponse.json(
-        { error: 'No se proporcionó archivo' },
+        { error: 'Faltan parámetros requeridos' },
         { status: 400 }
       );
     }
 
-    if (!galleryId) {
+    console.log(`📥 Descargando original desde Supabase: ${originalPath}`);
+
+    // 1. Descargar foto original de Supabase Storage
+    const { data: originalFile, error: downloadError } = await supabase.storage
+      .from('gallery-images')
+      .download(originalPath);
+
+    if (downloadError || !originalFile) {
+      console.error('❌ Error descargando original:', downloadError);
       return NextResponse.json(
-        { error: 'No se proporcionó galleryId' },
-        { status: 400 }
-      );
-    }
-
-    // Validar que sea una imagen
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json(
-        { error: 'El archivo debe ser una imagen' },
-        { status: 400 }
-      );
-    }
-
-    console.log(`📸 Procesando imagen: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
-
-    // Convertir File a Buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    console.log('✅ Buffer creado exitosamente');
-
-    // Generar nombres únicos
-    const timestamp = Date.now();
-    const randomString = Math.random().toString(36).substring(7);
-    const fileExtension = file.name.split('.').pop() || 'jpg';
-    const baseFileName = `${timestamp}-${randomString}`;
-
-    // 1. Procesar versión ORIGINAL (sin watermark, alta calidad)
-    console.log('🔧 Procesando versión original...');
-    let originalBuffer;
-    try {
-      originalBuffer = await processOriginal(buffer);
-      console.log('✅ Versión original procesada');
-    } catch (error: any) {
-      console.error('❌ Error procesando original:', error);
-      return NextResponse.json(
-        {
-          error: 'Error procesando imagen original',
-          details: error.message,
-        },
+        { error: 'Error descargando foto original', details: downloadError?.message },
         { status: 500 }
       );
     }
 
-    const originalFileName = `${baseFileName}-original.${fileExtension}`;
-    const originalPath = `galleries/${galleryId}/originals/${originalFileName}`;
+    console.log(`✅ Original descargado (${(originalFile.size / 1024 / 1024).toFixed(2)} MB)`);
+
+    // Convertir Blob a Buffer
+    const arrayBuffer = await originalFile.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    console.log('✅ Buffer creado exitosamente');
+
+    // Generar path para catálogo (el original ya está subido)
+    const baseFileName = fileName.split('.')[0]; // Quitar extensión
+    const catalogFileName = `${baseFileName}-catalog.jpg`; // Siempre JPG para catálogo
+    const catalogPath = `galleries/${galleryId}/${catalogFileName}`;
 
     // 2. Procesar versión CATÁLOGO (con watermark)
     console.log('💧 Aplicando marca de agua...');
@@ -113,25 +92,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const catalogFileName = `${baseFileName}-catalog.jpg`; // Siempre JPG para catálogo
-    const catalogPath = `galleries/${galleryId}/${catalogFileName}`;
-
-    // 3. Subir ORIGINAL a Supabase Storage
-    console.log('⬆️  Subiendo versión original...');
-    const { error: originalError } = await supabase.storage
-      .from('gallery-images')
-      .upload(originalPath, originalBuffer, {
-        contentType: `image/${fileExtension}`,
-        cacheControl: '3600',
-        upsert: false,
-      });
-
-    if (originalError) {
-      console.error('❌ Error subiendo original:', originalError);
-      throw new Error(`Error subiendo original: ${originalError.message}`);
-    }
-
-    // 4. Subir CATÁLOGO a Supabase Storage
+    // 3. Subir CATÁLOGO a Supabase Storage
     console.log('⬆️  Subiendo versión catálogo...');
     const { error: catalogError } = await supabase.storage
       .from('gallery-images')
@@ -143,14 +104,10 @@ export async function POST(request: NextRequest) {
 
     if (catalogError) {
       console.error('❌ Error subiendo catálogo:', catalogError);
-
-      // Limpiar: eliminar original si el catálogo falló
-      await supabase.storage.from('gallery-images').remove([originalPath]);
-
       throw new Error(`Error subiendo catálogo: ${catalogError.message}`);
     }
 
-    // 5. Obtener URL pública (solo del catálogo con watermark)
+    // 4. Obtener URL pública (solo del catálogo con watermark)
     const { data: urlData } = supabase.storage
       .from('gallery-images')
       .getPublicUrl(catalogPath);
@@ -159,7 +116,7 @@ export async function POST(request: NextRequest) {
       throw new Error('No se pudo obtener la URL pública');
     }
 
-    // 6. Guardar en la base de datos
+    // 5. Guardar en la base de datos
     console.log('💾 Guardando en base de datos...');
 
     // Intentar primero con original_path (si existe la columna)

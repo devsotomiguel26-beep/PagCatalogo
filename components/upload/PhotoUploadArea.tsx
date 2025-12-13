@@ -86,57 +86,6 @@ export default function PhotoUploadArea({ galleryId, onUploadComplete }: PhotoUp
     });
   };
 
-  // Función para redimensionar imagen en el cliente
-  const resizeImage = (file: File, maxWidth: number = 2000): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new window.Image();
-        img.onload = () => {
-          // Calcular nuevo tamaño manteniendo aspect ratio
-          let width = img.width;
-          let height = img.height;
-
-          if (width > maxWidth) {
-            height = (height * maxWidth) / width;
-            width = maxWidth;
-          }
-
-          // Crear canvas
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            reject(new Error('No se pudo crear canvas'));
-            return;
-          }
-
-          // Dibujar imagen redimensionada
-          ctx.drawImage(img, 0, 0, width, height);
-
-          // Convertir a Blob con calidad 85%
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                resolve(blob);
-              } else {
-                reject(new Error('Error al crear blob'));
-              }
-            },
-            'image/jpeg',
-            0.85
-          );
-        };
-        img.onerror = () => reject(new Error('Error al cargar imagen'));
-        img.src = e.target?.result as string;
-      };
-      reader.onerror = () => reject(new Error('Error al leer archivo'));
-      reader.readAsDataURL(file);
-    });
-  };
-
   const uploadFiles = async () => {
     if (uploadingFiles.length === 0) return;
 
@@ -156,41 +105,71 @@ export default function PhotoUploadArea({ galleryId, onUploadComplete }: PhotoUp
       });
 
       try {
-        // Redimensionar imagen en el cliente si es muy grande (>3MB)
-        let fileToUpload: File | Blob = fileData.file;
-        const maxSizeBytes = 3 * 1024 * 1024; // 3 MB
+        // Generar nombre de archivo único
+        const timestamp = Date.now();
+        const randomString = Math.random().toString(36).substring(7);
+        const fileExtension = fileData.file.name.split('.').pop();
+        const fileName = `${timestamp}-${randomString}.${fileExtension}`;
+        const originalPath = `galleries/${galleryId}/originals/${fileName}`;
 
-        if (fileData.file.size > maxSizeBytes) {
-          console.log(`📏 Imagen muy grande (${(fileData.file.size / 1024 / 1024).toFixed(2)}MB), redimensionando...`);
-          fileToUpload = await resizeImage(fileData.file);
-          console.log(`✅ Imagen redimensionada a ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`);
+        console.log(`📤 Subiendo original directo a Supabase: ${originalPath}`);
+
+        // 1. Subir foto ORIGINAL completa directo a Supabase Storage
+        // Esto evita el límite de 4.5MB de Vercel
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+
+        const { error: uploadError } = await supabase.storage
+          .from('gallery-images')
+          .upload(originalPath, fileData.file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) {
+          throw new Error(`Error subiendo original: ${uploadError.message}`);
         }
 
-        // Crear FormData para enviar al endpoint
-        const formData = new FormData();
-        formData.append('file', fileToUpload, fileData.file.name);
-        formData.append('galleryId', galleryId);
+        console.log(`✅ Original subido a Supabase`);
 
-        // Enviar al endpoint de procesamiento con watermark
+        // 2. Llamar endpoint para procesar (aplicar watermark y crear catalog)
+        console.log(`🎨 Procesando watermark...`);
+
         const response = await fetch('/api/upload-photo', {
           method: 'POST',
-          body: formData,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            originalPath,
+            galleryId,
+            fileName,
+          }),
         });
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({
             error: `Error ${response.status}: ${response.statusText}`
           }));
+
+          // Si falla el procesamiento, eliminar el original subido
+          await supabase.storage.from('gallery-images').remove([originalPath]);
+
           throw new Error(errorData.error || 'Error al procesar la foto');
         }
 
         const result = await response.json();
 
         if (!result.success) {
+          // Si falla, eliminar el original
+          await supabase.storage.from('gallery-images').remove([originalPath]);
           throw new Error('Error al procesar la foto');
         }
 
-        console.log('✅ Foto subida con marca de agua:', result.photo.id);
+        console.log('✅ Foto procesada con watermark:', result.photo.id);
 
         // Actualizar estado a "success"
         setUploadingFiles((prev) => {
