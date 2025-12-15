@@ -11,7 +11,7 @@ interface WatermarkOptions {
 const DEFAULT_OPTIONS: WatermarkOptions = {
   opacity: 50,
   position: 'center',
-  scale: 0.5, // Logo será 50% del ancho de la imagen
+  scale: 0.8, // Logo será 50% del ancho de la imagen
 };
 
 /**
@@ -121,7 +121,7 @@ export async function processForCatalog(inputBuffer: Buffer): Promise<Buffer> {
     const watermarkedBuffer = await addWatermark(resizedBuffer, {
       opacity: 50,
       position: 'center',
-      scale: 0.5,
+      scale: 0.8,
     });
 
     return watermarkedBuffer;
