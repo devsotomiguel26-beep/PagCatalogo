@@ -83,19 +83,68 @@ export default function AdminGaleriasPage() {
   async function deleteGallery(galleryId: string, title: string) {
     if (
       !confirm(
-        `¿Estás seguro de que deseas eliminar la galería "${title}"? Esta acción eliminará también todas sus fotos y no se puede deshacer.`
+        `¿Estás seguro de que deseas eliminar la galería "${title}"?\n\n` +
+          `Se eliminará:\n` +
+          `• La galería\n` +
+          `• Todas las fotos del storage\n` +
+          `• Los registros de fotos en la base de datos\n\n` +
+          `Se preservará:\n` +
+          `✓ El historial de solicitudes de fotos (para reportes y estadísticas)\n\n` +
+          `Esta acción NO se puede deshacer.`
       )
     ) {
       return;
     }
 
-    const { error } = await supabase.from('galleries').delete().eq('id', galleryId);
+    try {
+      // 1. Obtener rutas de fotos para eliminar del storage
+      const { data: photos } = await supabase
+        .from('photos')
+        .select('storage_path, original_path')
+        .eq('gallery_id', galleryId);
 
-    if (error) {
-      console.error('Error deleting gallery:', error);
-      alert('Error al eliminar la galería');
-    } else {
+      // 2. Eliminar fotos del storage
+      if (photos && photos.length > 0) {
+        const pathsToDelete = photos.flatMap((p) =>
+          [p.storage_path, p.original_path].filter(Boolean)
+        );
+
+        if (pathsToDelete.length > 0) {
+          const { error: storageError } = await supabase.storage
+            .from('gallery-images')
+            .remove(pathsToDelete);
+
+          if (storageError) {
+            console.error('Error deleting from storage:', storageError);
+            // No fallar si esto falla, continuar con la eliminación de BD
+          }
+        }
+      }
+
+      // 3. Eliminar la galería
+      // Las fotos se eliminarán en cascada (ON DELETE CASCADE)
+      // Las solicitudes se desvinculará automáticamente (ON DELETE SET NULL)
+      // ya que la migración configuró la FK con ON DELETE SET NULL
+      const { error: galleryError } = await supabase
+        .from('galleries')
+        .delete()
+        .eq('id', galleryId);
+
+      if (galleryError) {
+        console.error('Error deleting gallery:', galleryError);
+        throw new Error('Error al eliminar la galería');
+      }
+
+      // 4. Actualizar la lista local
       setGalleries((prev) => prev.filter((g) => g.id !== galleryId));
+
+      alert(
+        'Galería eliminada correctamente.\n\n' +
+          'El historial de solicitudes se ha preservado para reportes y estadísticas.'
+      );
+    } catch (error: any) {
+      console.error('Error in deleteGallery:', error);
+      alert(error.message || 'Error al eliminar la galería. Por favor, intenta nuevamente.');
     }
   }
 

@@ -17,6 +17,7 @@ interface GalleryFormData {
   event_date: string;
   location: string;
   status: string;
+  watermark_path?: string | null;
 }
 
 interface Photo {
@@ -74,7 +75,7 @@ export default function EditGaleriaPage() {
     }
   }
 
-  async function handleSubmit(data: GalleryFormData) {
+  async function handleSubmit(data: GalleryFormData, watermarkFile?: File | null) {
     setIsSubmitting(true);
     setError('');
     setSuccessMessage('');
@@ -100,6 +101,26 @@ export default function EditGaleriaPage() {
         }
       }
 
+      // Si hay un archivo de watermark, subirlo a Supabase
+      let watermarkPathToSave = data.watermark_path;
+
+      if (watermarkFile) {
+        const watermarkPath = `watermarks/custom/${galleryId}-watermark.png`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('gallery-images')
+          .upload(watermarkPath, watermarkFile, {
+            cacheControl: '3600',
+            upsert: true, // Permitir sobrescribir
+          });
+
+        if (uploadError) {
+          throw new Error(`Error subiendo marca de agua: ${uploadError.message}`);
+        }
+
+        watermarkPathToSave = watermarkPath;
+      }
+
       // Actualizar la galería
       const { error: updateError } = await supabase
         .from('galleries')
@@ -112,6 +133,7 @@ export default function EditGaleriaPage() {
           event_date: data.event_date,
           location: data.location || null,
           status: data.status,
+          watermark_path: watermarkPathToSave,
           updated_at: new Date().toISOString(),
         })
         .eq('id', galleryId);
@@ -121,7 +143,7 @@ export default function EditGaleriaPage() {
       }
 
       setSuccessMessage('Galería actualizada correctamente');
-      setGallery(data);
+      setGallery({ ...data, watermark_path: watermarkPathToSave });
 
       // Limpiar mensaje después de 3 segundos
       setTimeout(() => setSuccessMessage(''), 3000);
@@ -253,6 +275,7 @@ export default function EditGaleriaPage() {
           onSubmit={handleSubmit}
           submitLabel="Guardar Cambios"
           isSubmitting={isSubmitting}
+          galleryId={galleryId}
         />
       </div>
 

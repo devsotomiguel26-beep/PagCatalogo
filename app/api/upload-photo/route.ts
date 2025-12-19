@@ -48,6 +48,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Consultar galería para obtener configuración de watermark
+    // (con manejo robusto si la columna watermark_path aún no existe)
+    console.log('🔍 Consultando configuración de marca de agua de la galería...');
+    let watermarkPathToUse: string | undefined;
+
+    try {
+      const { data: galleryData, error: galleryError } = await supabase
+        .from('galleries')
+        .select('watermark_path')
+        .eq('id', galleryId)
+        .single();
+
+      if (galleryError) {
+        // Si el error es por columna no encontrada, simplemente usar fallback
+        if (galleryError.message.includes('column') || galleryError.code === 'PGRST116') {
+          console.log('⚠️  Columna watermark_path no existe aún, usando marca global/local');
+        } else {
+          console.error('❌ Error consultando galería:', galleryError);
+          // Para otros errores, continuar con fallback en lugar de fallar
+        }
+      } else if (galleryData?.watermark_path) {
+        // Usar marca de agua personalizada de la galería
+        console.log(`🎨 Marca de agua personalizada configurada: ${galleryData.watermark_path}`);
+
+        const { data: watermarkUrl } = supabase.storage
+          .from('gallery-images')
+          .getPublicUrl(galleryData.watermark_path);
+
+        watermarkPathToUse = watermarkUrl.publicUrl;
+        console.log(`✅ Usando marca de agua personalizada`);
+      }
+    } catch (error) {
+      console.log('⚠️  Error al consultar watermark personalizada, usando fallback:', error);
+    }
+
+    // Si no hay marca personalizada, intentar marca global
+    if (!watermarkPathToUse) {
+      console.log('🌐 Verificando marca de agua global en Supabase...');
+
+      const globalWatermarkPath = 'watermarks/global/logo.png';
+      const { data: globalExists } = await supabase.storage
+        .from('gallery-images')
+        .list('watermarks/global', {
+          search: 'logo.png',
+        });
+
+      if (globalExists && globalExists.length > 0) {
+        const { data: globalUrl } = supabase.storage
+          .from('gallery-images')
+          .getPublicUrl(globalWatermarkPath);
+
+        watermarkPathToUse = globalUrl.publicUrl;
+        console.log('✅ Usando marca de agua global desde Supabase');
+      } else {
+        // Fallback a marca de agua local en /public
+        console.log('📁 Usando marca de agua local (fallback)');
+        watermarkPathToUse = undefined; // Usará el path por defecto en watermark.ts
+      }
+    }
+
     console.log(`📥 Descargando original desde Supabase: ${originalPath}`);
 
     // 1. Descargar foto original de Supabase Storage
@@ -79,7 +139,7 @@ export async function POST(request: NextRequest) {
     console.log('💧 Aplicando marca de agua...');
     let catalogBuffer;
     try {
-      catalogBuffer = await processForCatalog(buffer);
+      catalogBuffer = await processForCatalog(buffer, watermarkPathToUse);
       console.log('✅ Marca de agua aplicada');
     } catch (error: any) {
       console.error('❌ Error aplicando watermark:', error);

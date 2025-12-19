@@ -18,11 +18,13 @@ const DEFAULT_OPTIONS: WatermarkOptions = {
  * Agrega marca de agua (logo) a una imagen
  * @param inputBuffer Buffer de la imagen original
  * @param options Opciones de configuración de marca de agua
+ * @param watermarkPath Path o URL de la marca de agua (opcional, usa local por defecto)
  * @returns Buffer de la imagen con marca de agua
  */
 export async function addWatermark(
   inputBuffer: Buffer,
-  options: WatermarkOptions = {}
+  options: WatermarkOptions = {},
+  watermarkPath?: string
 ): Promise<Buffer> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
@@ -32,18 +34,38 @@ export async function addWatermark(
     const imageWidth = imageMetadata.width || 1920;
     const imageHeight = imageMetadata.height || 1080;
 
-    // Cargar logo
-    const logoPath = path.join(process.cwd(), 'public', 'watermark', 'logo.png');
+    // Cargar logo desde URL (Supabase) o filesystem local
+    let logoBuffer: Buffer;
 
-    if (!fs.existsSync(logoPath)) {
-      throw new Error('Logo de marca de agua no encontrado en public/watermark/logo.png');
+    if (watermarkPath) {
+      // Descargar marca de agua desde URL de Supabase
+      console.log(`🔽 Descargando marca de agua desde: ${watermarkPath}`);
+      const response = await fetch(watermarkPath);
+
+      if (!response.ok) {
+        throw new Error(`Error descargando marca de agua: ${response.statusText}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      logoBuffer = Buffer.from(arrayBuffer);
+      console.log('✅ Marca de agua descargada correctamente');
+    } else {
+      // Leer marca de agua local (fallback)
+      const logoPath = path.join(process.cwd(), 'public', 'watermark', 'logo.png');
+
+      if (!fs.existsSync(logoPath)) {
+        throw new Error('Logo de marca de agua no encontrado en public/watermark/logo.png');
+      }
+
+      logoBuffer = fs.readFileSync(logoPath);
+      console.log('📁 Usando marca de agua local');
     }
 
     // Calcular tamaño del logo
     const logoWidth = Math.floor(imageWidth * (opts.scale || 0.5));
 
     // Procesar logo: redimensionar y aplicar opacidad
-    const watermarkBuffer = await sharp(logoPath)
+    const watermarkBuffer = await sharp(logoBuffer)
       .resize(logoWidth, null, {
         fit: 'inside',
         withoutEnlargement: true,
@@ -104,9 +126,13 @@ export async function addWatermark(
 /**
  * Procesa una imagen para el catálogo: optimiza y agrega marca de agua
  * @param inputBuffer Buffer de la imagen original
+ * @param watermarkPath Path o URL de la marca de agua (opcional)
  * @returns Buffer de la imagen optimizada con marca de agua
  */
-export async function processForCatalog(inputBuffer: Buffer): Promise<Buffer> {
+export async function processForCatalog(
+  inputBuffer: Buffer,
+  watermarkPath?: string
+): Promise<Buffer> {
   try {
     // Primero optimizar tamaño para web (máximo 1920x1080)
     const resizedBuffer = await sharp(inputBuffer)
@@ -118,11 +144,15 @@ export async function processForCatalog(inputBuffer: Buffer): Promise<Buffer> {
       .toBuffer();
 
     // Luego agregar marca de agua
-    const watermarkedBuffer = await addWatermark(resizedBuffer, {
-      opacity: 50,
-      position: 'center',
-      scale: 0.8,
-    });
+    const watermarkedBuffer = await addWatermark(
+      resizedBuffer,
+      {
+        opacity: 50,
+        position: 'center',
+        scale: 0.8,
+      },
+      watermarkPath
+    );
 
     return watermarkedBuffer;
   } catch (error) {

@@ -15,6 +15,7 @@ interface GalleryFormData {
   event_date: string;
   location: string;
   status: string;
+  watermark_path?: string | null;
 }
 
 export default function NuevaGaleriaPage() {
@@ -22,7 +23,7 @@ export default function NuevaGaleriaPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  async function handleSubmit(data: GalleryFormData) {
+  async function handleSubmit(data: GalleryFormData, watermarkFile?: File | null) {
     setIsSubmitting(true);
     setError('');
 
@@ -64,6 +65,30 @@ export default function NuevaGaleriaPage() {
 
       if (insertError) {
         throw insertError;
+      }
+
+      // Si hay un archivo de watermark, subirlo a Supabase
+      if (watermarkFile && newGallery) {
+        const watermarkPath = `watermarks/custom/${newGallery.id}-watermark.png`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('gallery-images')
+          .upload(watermarkPath, watermarkFile, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) {
+          console.error('Error subiendo marca de agua:', uploadError);
+          // No fallar la creación de la galería si falla el watermark
+          // El usuario puede subirlo después en la edición
+        } else {
+          // Actualizar la galería con el watermark_path
+          await supabase
+            .from('galleries')
+            .update({ watermark_path: watermarkPath })
+            .eq('id', newGallery.id);
+        }
       }
 
       // Redirigir a la página de edición para subir fotos

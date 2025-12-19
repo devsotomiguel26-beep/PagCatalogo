@@ -131,6 +131,15 @@ export async function getRequestForDelivery(requestId: string) {
       throw new Error('Solicitud no encontrada');
     }
 
+    // Si la galería fue eliminada (gallery_id es null), usar campos desnormalizados
+    if (!data.galleries && data.gallery_title) {
+      data.galleries = {
+        id: null,
+        title: data.gallery_title,
+        slug: data.gallery_slug,
+      };
+    }
+
     return data;
   } catch (error) {
     console.error('Error getting request for delivery:', error);

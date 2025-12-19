@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
         client_email,
         child_name,
         photo_ids,
+        gallery_title,
         galleries (
           title
         )
@@ -43,6 +44,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Si la galería fue eliminada, usar el título desnormalizado
+    const galleryTitle = photoRequest.galleries?.title || photoRequest.gallery_title || 'Galería';
+
     // Calcular monto
     const photoCount = photoRequest.photo_ids.length;
     const amount = photoCount * PRICE_PER_PHOTO;
@@ -52,7 +56,7 @@ export async function POST(request: NextRequest) {
     // Crear pago en Flow
     const flowPayment = await createFlowPayment({
       commerceOrder: requestId,
-      subject: `Fotos ${photoRequest.child_name} - ${photoRequest.galleries.title}`,
+      subject: `Fotos ${photoRequest.child_name} - ${galleryTitle}`,
       amount: amount,
       email: photoRequest.client_email,
       urlConfirmation: `${APP_URL}/api/webhooks/flow`,

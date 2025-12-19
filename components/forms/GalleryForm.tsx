@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 interface Category {
@@ -17,13 +17,15 @@ interface GalleryFormData {
   event_date: string;
   location: string;
   status: string;
+  watermark_path?: string | null;
 }
 
 interface GalleryFormProps {
   initialData?: Partial<GalleryFormData>;
-  onSubmit: (data: GalleryFormData) => Promise<void>;
+  onSubmit: (data: GalleryFormData, watermarkFile?: File | null) => Promise<void>;
   submitLabel?: string;
   isSubmitting?: boolean;
+  galleryId?: string; // Para preview de watermark existente
 }
 
 export default function GalleryForm({
@@ -31,6 +33,7 @@ export default function GalleryForm({
   onSubmit,
   submitLabel = 'Guardar',
   isSubmitting = false,
+  galleryId,
 }: GalleryFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState<GalleryFormData>({
@@ -42,7 +45,13 @@ export default function GalleryForm({
     event_date: initialData?.event_date || '',
     location: initialData?.location || '',
     status: initialData?.status || 'draft',
+    watermark_path: initialData?.watermark_path || null,
   });
+
+  // Estados para manejo de marca de agua personalizada
+  const [watermarkFile, setWatermarkFile] = useState<File | null>(null);
+  const [watermarkPreview, setWatermarkPreview] = useState<string | null>(null);
+  const watermarkInputRef = useRef<HTMLInputElement>(null);
 
   const eventTypes = [
     { value: 'partido', label: 'Partido' },
@@ -54,6 +63,17 @@ export default function GalleryForm({
   useEffect(() => {
     fetchCategories();
   }, []);
+
+  useEffect(() => {
+    // Cargar preview de watermark existente
+    if (initialData?.watermark_path && galleryId) {
+      const { data: urlData } = supabase.storage
+        .from('gallery-images')
+        .getPublicUrl(initialData.watermark_path);
+
+      setWatermarkPreview(urlData.publicUrl);
+    }
+  }, [initialData?.watermark_path, galleryId]);
 
   async function fetchCategories() {
     const { data, error } = await supabase
@@ -97,9 +117,40 @@ export default function GalleryForm({
     setFormData((prev) => ({ ...prev, [name]: value }));
   }
 
+  function handleWatermarkSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    // Validar que sea PNG
+    if (!file.type.includes('png')) {
+      alert('Solo se permiten archivos PNG con transparencia');
+      return;
+    }
+
+    // Validar tamaño (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('El archivo es muy grande. Máximo 5MB.');
+      return;
+    }
+
+    setWatermarkFile(file);
+    setWatermarkPreview(URL.createObjectURL(file));
+  }
+
+  function removeCustomWatermark() {
+    if (!confirm('¿Eliminar la marca de agua personalizada? Se usará la marca global.')) {
+      return;
+    }
+
+    setWatermarkFile(null);
+    setWatermarkPreview(null);
+    setFormData((prev) => ({ ...prev, watermark_path: null }));
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit(formData, watermarkFile);
   }
 
   return (
@@ -251,6 +302,62 @@ export default function GalleryForm({
           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
           placeholder="Ej: Estadio Municipal de Puente Alto"
         />
+      </div>
+
+      {/* Marca de Agua Personalizada (opcional) */}
+      <div className="border-t border-gray-200 pt-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          Marca de Agua Personalizada (Opcional)
+        </h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Si no subes una marca de agua personalizada, se usará la marca de agua global del club.
+        </p>
+
+        <div className="space-y-4">
+          {/* Preview actual */}
+          {watermarkPreview && (
+            <div className="relative inline-block">
+              <img
+                src={watermarkPreview}
+                alt="Marca de agua personalizada"
+                className="h-32 w-auto border border-gray-300 rounded bg-gray-100 p-2"
+              />
+              <button
+                type="button"
+                onClick={removeCustomWatermark}
+                className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Botón para subir */}
+          <div>
+            <input
+              ref={watermarkInputRef}
+              type="file"
+              accept="image/png"
+              onChange={handleWatermarkSelect}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => watermarkInputRef.current?.click()}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
+              <svg className="mr-2 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              {watermarkPreview ? 'Cambiar marca de agua' : 'Subir marca de agua'}
+            </button>
+            <p className="mt-2 text-xs text-gray-500">
+              Solo PNG con transparencia. Máximo 5MB. Recomendado: 1000-2000px de ancho.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Botón Submit */}

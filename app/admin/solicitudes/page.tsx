@@ -7,7 +7,7 @@ import Image from 'next/image';
 
 interface PhotoRequest {
   id: string;
-  gallery_id: string;
+  gallery_id: string | null;
   photo_ids: string[];
   client_name: string;
   client_email: string;
@@ -15,10 +15,12 @@ interface PhotoRequest {
   child_name: string;
   status: string;
   created_at: string;
+  gallery_title?: string;
+  gallery_slug?: string;
   galleries: {
     title: string;
     slug: string;
-  };
+  } | null;
 }
 
 interface Photo {
@@ -252,13 +254,19 @@ export default function SolicitudesPage() {
                         {request.child_name}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        <Link
-                          href={`/galerias/${request.galleries.slug}`}
-                          target="_blank"
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          {request.galleries.title}
-                        </Link>
+                        {request.galleries ? (
+                          <Link
+                            href={`/galerias/${request.galleries.slug}`}
+                            target="_blank"
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            {request.galleries.title}
+                          </Link>
+                        ) : (
+                          <span className="text-gray-500">
+                            {request.gallery_title || 'Galería eliminada'}
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {request.photo_ids.length}

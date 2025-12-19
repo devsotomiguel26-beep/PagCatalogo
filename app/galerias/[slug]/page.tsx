@@ -176,6 +176,10 @@ export default function GaleriaPage() {
         .insert([
           {
             gallery_id: gallery.id,
+            gallery_title: gallery.title,
+            gallery_event_date: gallery.event_date,
+            gallery_event_type: gallery.event_type,
+            gallery_slug: gallery.slug,
             photo_ids: photoIds,
             client_name: data.parentName,
             client_email: data.email,
