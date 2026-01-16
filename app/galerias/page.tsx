@@ -21,6 +21,7 @@ interface Gallery {
   category_id: string;
   event_type: string;
   event_date: string;
+  cover_photo_id?: string | null;
   categories: Category;
   photos: { count: number }[];
   coverPhotoUrl?: string;
@@ -72,6 +73,7 @@ export default function GaleriasPage() {
         category_id,
         event_type,
         event_date,
+        cover_photo_id,
         categories (
           id,
           name,
@@ -97,19 +99,39 @@ export default function GaleriasPage() {
     if (error) {
       console.error('Error fetching galleries:', error);
     } else {
-      // Para cada galería, obtener la primera foto como portada
+      // Para cada galería, obtener la foto de portada
       const galleriesWithCovers = await Promise.all(
         (data || []).map(async (gallery) => {
-          const { data: photos } = await supabase
-            .from('photos')
-            .select('public_url')
-            .eq('gallery_id', gallery.id)
-            .order('position', { ascending: true, nullsFirst: false })
-            .limit(1);
+          let coverPhotoUrl: string | undefined;
+
+          // Si la galería tiene cover_photo_id definido, usar esa foto
+          if (gallery.cover_photo_id) {
+            const { data: coverPhoto } = await supabase
+              .from('photos')
+              .select('public_url')
+              .eq('id', gallery.cover_photo_id)
+              .single();
+
+            if (coverPhoto) {
+              coverPhotoUrl = coverPhoto.public_url;
+            }
+          }
+
+          // Si no tiene cover_photo_id o no se encontró, usar la primera foto
+          if (!coverPhotoUrl) {
+            const { data: photos } = await supabase
+              .from('photos')
+              .select('public_url')
+              .eq('gallery_id', gallery.id)
+              .order('position', { ascending: true, nullsFirst: false })
+              .limit(1);
+
+            coverPhotoUrl = photos && photos.length > 0 ? photos[0].public_url : undefined;
+          }
 
           return {
             ...gallery,
-            coverPhotoUrl: photos && photos.length > 0 ? photos[0].public_url : undefined,
+            coverPhotoUrl,
           };
         })
       );

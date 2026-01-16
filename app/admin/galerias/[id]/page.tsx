@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import GalleryForm from '@/components/forms/GalleryForm';
 import PhotoUploadArea from '@/components/upload/PhotoUploadArea';
+import CoverPhotoSelector from '@/components/admin/CoverPhotoSelector';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -18,6 +19,7 @@ interface GalleryFormData {
   location: string;
   status: string;
   watermark_path?: string | null;
+  cover_photo_id?: string | null;
 }
 
 interface Photo {
@@ -286,7 +288,7 @@ export default function EditGaleriaPage() {
       </div>
 
       {/* Photos Gallery Section */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
@@ -313,7 +315,7 @@ export default function EditGaleriaPage() {
                 </div>
                 <button
                   onClick={() => deletePhoto(photo.id, photo.storage_path)}
-                  className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
+                  className="absolute top-2 right-2 p-2 bg-devil-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-devil-700"
                   aria-label="Eliminar foto"
                 >
                   <svg
@@ -356,6 +358,25 @@ export default function EditGaleriaPage() {
             </p>
           </div>
         )}
+      </div>
+
+      {/* Cover Photo Selector Section */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Foto de Portada
+          </h2>
+          <p className="mt-1 text-sm text-gray-600">
+            Selecciona qué foto aparecerá como miniatura de esta galería
+          </p>
+        </div>
+
+        <CoverPhotoSelector
+          photos={photos}
+          currentCoverPhotoId={gallery.cover_photo_id}
+          galleryId={galleryId}
+          onCoverPhotoSet={fetchGallery}
+        />
       </div>
     </div>
   );
