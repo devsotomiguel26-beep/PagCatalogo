@@ -103,7 +103,11 @@ export async function POST(request: NextRequest) {
     if (updateError) {
       console.error('Error updating gallery:', updateError);
       return NextResponse.json(
-        { error: 'Error al actualizar la galería' },
+        {
+          error: 'Error al actualizar la galería',
+          details: updateError.message,
+          hint: updateError.hint || 'Verifica que la columna cover_thumbnail_url exista en la tabla galleries'
+        },
         { status: 500 }
       );
     }
