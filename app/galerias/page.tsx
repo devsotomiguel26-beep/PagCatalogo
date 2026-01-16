@@ -22,6 +22,7 @@ interface Gallery {
   event_type: string;
   event_date: string;
   cover_photo_id?: string | null;
+  cover_thumbnail_url?: string | null;
   categories: Category;
   photos: { count: number }[];
   coverPhotoUrl?: string;
@@ -74,6 +75,7 @@ export default function GaleriasPage() {
         event_type,
         event_date,
         cover_photo_id,
+        cover_thumbnail_url,
         categories (
           id,
           name,
@@ -104,8 +106,12 @@ export default function GaleriasPage() {
         (data || []).map(async (gallery) => {
           let coverPhotoUrl: string | undefined;
 
-          // Si la galería tiene cover_photo_id definido, usar esa foto
-          if (gallery.cover_photo_id) {
+          // Prioridad 1: Usar cover_thumbnail_url si está disponible (sin marca de agua)
+          if (gallery.cover_thumbnail_url) {
+            coverPhotoUrl = gallery.cover_thumbnail_url;
+          }
+          // Prioridad 2: Si tiene cover_photo_id pero no thumbnail, usar esa foto
+          else if (gallery.cover_photo_id) {
             const { data: coverPhoto } = await supabase
               .from('photos')
               .select('public_url')
@@ -117,7 +123,7 @@ export default function GaleriasPage() {
             }
           }
 
-          // Si no tiene cover_photo_id o no se encontró, usar la primera foto
+          // Prioridad 3: Si no tiene portada definida, usar la primera foto
           if (!coverPhotoUrl) {
             const { data: photos } = await supabase
               .from('photos')

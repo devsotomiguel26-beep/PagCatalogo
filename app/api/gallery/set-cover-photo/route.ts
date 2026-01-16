@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
+import sharp from 'sharp';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,10 +15,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar que la foto existe y pertenece a la galería
+    // Crear cliente de Supabase con variables de entorno
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    // Verificar que la foto existe y obtener el original_path
     const { data: photo, error: photoError } = await supabase
       .from('photos')
-      .select('id, gallery_id')
+      .select('id, gallery_id, original_path')
       .eq('id', photoId)
       .eq('gallery_id', galleryId)
       .single();
@@ -29,19 +36,75 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Actualizar el cover_photo_id de la galería
+    // Descargar la foto ORIGINAL (sin watermark) desde Supabase Storage
+    const { data: fileData, error: downloadError } = await supabase.storage
+      .from('gallery-images')
+      .download(photo.original_path);
+
+    if (downloadError || !fileData) {
+      console.error('Error downloading original photo:', downloadError);
+      return NextResponse.json(
+        { error: 'Error al descargar la foto original' },
+        { status: 500 }
+      );
+    }
+
+    // Convertir Blob a Buffer
+    const arrayBuffer = await fileData.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Procesar la imagen con Sharp: crear thumbnail 400x400px SIN watermark
+    const thumbnailBuffer = await sharp(buffer)
+      .resize(400, 400, {
+        fit: 'cover',
+        position: 'center',
+      })
+      .jpeg({
+        quality: 85,
+        progressive: true,
+      })
+      .toBuffer();
+
+    // Subir el thumbnail a Supabase Storage
+    const thumbnailPath = `galleries/${galleryId}/cover-thumbnail.jpg`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('gallery-images')
+      .upload(thumbnailPath, thumbnailBuffer, {
+        contentType: 'image/jpeg',
+        cacheControl: '3600',
+        upsert: true, // Sobrescribir si ya existe
+      });
+
+    if (uploadError) {
+      console.error('Error uploading thumbnail:', uploadError);
+      return NextResponse.json(
+        { error: 'Error al subir el thumbnail' },
+        { status: 500 }
+      );
+    }
+
+    // Obtener la URL pública del thumbnail
+    const { data: urlData } = supabase.storage
+      .from('gallery-images')
+      .getPublicUrl(thumbnailPath);
+
+    const coverThumbnailUrl = urlData.publicUrl;
+
+    // Actualizar la galería con cover_photo_id y cover_thumbnail_url
     const { error: updateError } = await supabase
       .from('galleries')
       .update({
         cover_photo_id: photoId,
+        cover_thumbnail_url: coverThumbnailUrl,
         updated_at: new Date().toISOString(),
       })
       .eq('id', galleryId);
 
     if (updateError) {
-      console.error('Error updating cover_photo_id:', updateError);
+      console.error('Error updating gallery:', updateError);
       return NextResponse.json(
-        { error: 'Error al actualizar la portada' },
+        { error: 'Error al actualizar la galería' },
         { status: 500 }
       );
     }
@@ -50,6 +113,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Portada actualizada correctamente',
       coverPhotoId: photoId,
+      coverThumbnailUrl,
     });
   } catch (error: any) {
     console.error('Error in set-cover-photo API:', error);

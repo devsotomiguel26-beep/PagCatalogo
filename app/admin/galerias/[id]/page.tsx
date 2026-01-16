@@ -20,6 +20,7 @@ interface GalleryFormData {
   status: string;
   watermark_path?: string | null;
   cover_photo_id?: string | null;
+  cover_thumbnail_url?: string | null;
 }
 
 interface Photo {
