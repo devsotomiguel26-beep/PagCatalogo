@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -7,44 +8,65 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      <main className="flex-grow bg-white">
-        {/* Hero Section - Minimalista */}
-        <section className="relative bg-white">
-          <div className="max-w-5xl mx-auto px-8 lg:px-12 py-24 md:py-32 lg:py-40">
-            <div className="text-center fade-in">
+      <main className="flex-grow">
+        {/* Hero Section - Con imagen de fondo y gradient overlay */}
+        <section className="relative h-[85vh] min-h-[600px] flex items-center justify-center overflow-hidden">
+          {/* Imagen de fondo */}
+          <div className="absolute inset-0 z-0">
+            <Image
+              src="/GRUPALDR2-1.jpg"
+              alt="Comunidad Diablos Rojos"
+              fill
+              priority
+              quality={90}
+              className="object-cover object-center"
+              sizes="100vw"
+            />
+          </div>
+
+          {/* Gradient overlay - De oscuro arriba a más claro abajo */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/35 z-10"></div>
+
+          {/* Contenido sobre la imagen */}
+          <div className="relative z-20 max-w-5xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
+            <div className="fade-in">
               {/* Tagline pequeño */}
-              <p className="text-sm font-medium text-devil-600 mb-6 tracking-wide uppercase">
+              <p className="text-sm font-medium text-white/90 mb-6 tracking-wide uppercase drop-shadow-lg">
                 Fotografía Deportiva
               </p>
 
-              {/* Título principal - minimalista pero impactante */}
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-light text-gray-900 mb-8 tracking-tight leading-tight">
-                Capturamos la emoción
+              {/* Título principal - Emocional y familiar */}
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-white mb-6 tracking-tight leading-tight drop-shadow-2xl">
+                Capturamos los momentos que
                 <br />
-                de cada <span className="font-semibold text-devil-600">momento</span>
+                unen a nuestra <span className="font-semibold">familia Diablos Rojos</span>
               </h1>
 
-              {/* Subtítulo */}
-              <p className="text-lg md:text-xl text-gray-600 mb-12 max-w-2xl mx-auto font-light leading-relaxed">
-                Fotografía profesional de partidos, torneos y eventos deportivos.
-                Revive tus mejores jugadas en alta calidad.
+              {/* Subtítulo - Más emocional */}
+              <p className="text-lg md:text-xl lg:text-2xl text-white/95 mb-12 max-w-3xl mx-auto font-light leading-relaxed drop-shadow-lg">
+                Revive cada jugada, cada gol, cada abrazo.<br className="hidden sm:block" />
+                Fotografías que cuentan la historia de tu familia en el campo.
               </p>
 
-              {/* CTA - simple y directo */}
+              {/* CTA - Rojo vibrante que resalte */}
               <Link
                 href="/galerias"
-                className="inline-flex items-center gap-2 bg-devil-600 text-white px-8 py-3.5 rounded-md font-medium text-base hover:bg-devil-700 transition-colors duration-200"
+                className="inline-flex items-center gap-2 bg-devil-600 text-white px-10 py-4 rounded-lg font-semibold text-base hover:bg-devil-700 transition-all duration-200 shadow-2xl hover:shadow-devil-600/50 hover:scale-105"
               >
                 Ver Galerías
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </Link>
             </div>
           </div>
 
-          {/* Divider sutil */}
-          <div className="border-t border-gray-100"></div>
+          {/* Indicador de scroll opcional */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 animate-bounce">
+            <svg className="w-6 h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </div>
         </section>
 
         {/* Features Section - Minimalista */}
