@@ -35,17 +35,15 @@ export default function Home() {
                 Fotografía Deportiva
               </p>
 
-              {/* Título principal - Emocional y familiar */}
+              {/* Título principal - Más corto y directo */}
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-white mb-6 tracking-tight leading-tight drop-shadow-2xl">
-                Capturamos los momentos que
-                <br />
-                unen a nuestra <span className="font-semibold">familia Diablos Rojos</span>
+                <span className="font-semibold">Capturamos momentos Diablos Rojos</span>
               </h1>
 
-              {/* Subtítulo - Más emocional */}
+              {/* Subtítulo - Más conciso */}
               <p className="text-lg md:text-xl lg:text-2xl text-white/95 mb-12 max-w-3xl mx-auto font-light leading-relaxed drop-shadow-lg">
-                Revive cada jugada, cada gol, cada abrazo.<br className="hidden sm:block" />
-                Fotografías que cuentan la historia de tu familia en el campo.
+                Revive cada jugada, cada gol, cada abrazo<br className="hidden sm:block" />
+                dentro y fuera de la cancha
               </p>
 
               {/* CTA - Rojo vibrante que resalte */}
