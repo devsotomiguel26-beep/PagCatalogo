@@ -65,6 +65,16 @@ body {
   .fade-in {
     animation: fadeIn 0.4s ease-out;
   }
+
+  /* Scrollbar hide - Para filtros pills */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Smooth scroll */
