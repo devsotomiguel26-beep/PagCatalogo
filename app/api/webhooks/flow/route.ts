@@ -8,6 +8,11 @@ import {
   markPhotosAsSent,
   getRequestForDelivery,
 } from '@/lib/photoDelivery';
+import {
+  createTransactionDetails,
+  getDefaultCommissionConfig,
+  type CommissionConfig,
+} from '@/lib/earningsCalculations';
 
 export async function POST(request: NextRequest) {
   try {
@@ -105,7 +110,7 @@ export async function POST(request: NextRequest) {
       // Verificar si ya fue procesado (evitar duplicados)
       const { data: existingRequest } = await supabase
         .from('photo_requests')
-        .select('status, photos_sent_at')
+        .select('status, photos_sent_at, gallery_id, photo_ids')
         .eq('id', requestId)
         .single();
 
@@ -114,17 +119,70 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ status: 'ok', message: 'Already processed' });
       }
 
-      // Actualizar status a "paid"
+      // Obtener configuración de comisiones de la galería
+      console.log('📊 Obteniendo configuración de comisiones...');
+      const { data: gallery } = await supabase
+        .from('galleries')
+        .select('commission_config')
+        .eq('id', existingRequest.gallery_id)
+        .single();
+
+      // Usar config de la galería o defaults
+      let commissionConfig: CommissionConfig = getDefaultCommissionConfig();
+      if (gallery?.commission_config) {
+        commissionConfig = {
+          ...commissionConfig,
+          ...gallery.commission_config,
+        };
+      }
+
+      console.log('💰 Configuración de comisiones:', commissionConfig);
+
+      // Obtener precio por foto actual
+      const pricePerPhoto = parseInt(process.env.PRICE_PER_PHOTO || '2000');
+      const photoCount = existingRequest.photo_ids?.length || 0;
+
+      // Extraer comisión real de Flow si está disponible
+      // Flow devuelve: amount (monto total), balance (neto que recibes), fee (comisión)
+      let gatewayFee: number | null = null;
+      if (paymentStatus.fee !== undefined && paymentStatus.fee !== null) {
+        gatewayFee = paymentStatus.fee;
+        console.log('✅ Comisión real de Flow capturada:', gatewayFee);
+      } else {
+        console.log('⚠️ Comisión de Flow no disponible, se estimará');
+      }
+
+      // Calcular distribución de ganancias
+      const transactionDetails = createTransactionDetails(
+        photoCount,
+        pricePerPhoto,
+        gatewayFee,
+        commissionConfig,
+        paymentStatus.flowOrder
+      );
+
+      console.log('💵 Desglose de ganancias:', {
+        gross: transactionDetails.gross_amount,
+        gateway_fee: transactionDetails.gateway_fee,
+        net: transactionDetails.net_amount,
+        photographer: transactionDetails.photographer_share,
+        director: transactionDetails.director_share,
+      });
+
+      // Actualizar status a "paid" y guardar transaction_details
       await supabase
         .from('photo_requests')
         .update({
           status: 'paid',
           flow_order: paymentStatus.flowOrder,
           payment_date: new Date().toISOString(),
+          price_per_photo: pricePerPhoto,
+          transaction_details: transactionDetails,
+          settlement_status: 'pending',
         })
         .eq('id', requestId);
 
-      console.log('💾 Status actualizado a "paid"');
+      console.log('💾 Status actualizado a "paid" con transaction_details');
 
       // Obtener datos completos de la solicitud
       const requestData = await getRequestForDelivery(requestId);
@@ -188,16 +246,63 @@ export async function POST(request: NextRequest) {
             html: `
               <h2>Pago Confirmado</h2>
               <p>Se ha recibido un pago y las fotos han sido enviadas automáticamente.</p>
+
+              <h3>Información del Cliente</h3>
               <ul>
                 <li><strong>Cliente:</strong> ${requestData.client_name}</li>
                 <li><strong>Email:</strong> ${requestData.client_email}</li>
                 <li><strong>Niño/a:</strong> ${requestData.child_name}</li>
                 <li><strong>Galería:</strong> ${requestData.galleries.title}</li>
                 <li><strong>Fotos:</strong> ${downloadLinks.length}</li>
-                <li><strong>Monto:</strong> $${paymentStatus.amount.toLocaleString('es-CL')}</li>
-                <li><strong>Flow Order:</strong> ${paymentStatus.flowOrder}</li>
               </ul>
-              <p>Las fotos fueron enviadas automáticamente al cliente.</p>
+
+              <h3>Desglose Financiero</h3>
+              <table style="border-collapse: collapse; width: 100%; max-width: 500px;">
+                <tr style="background-color: #f3f4f6;">
+                  <td style="padding: 8px; border: 1px solid #ddd;"><strong>Monto Total:</strong></td>
+                  <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">
+                    $${transactionDetails.gross_amount.toLocaleString('es-CL')}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #ddd;">
+                    Comisión Flow ${transactionDetails.gateway_fee_estimated ? '(estimada)' : ''}:
+                  </td>
+                  <td style="padding: 8px; border: 1px solid #ddd; text-align: right; color: #dc2626;">
+                    -$${transactionDetails.gateway_fee.toLocaleString('es-CL')}
+                  </td>
+                </tr>
+                <tr style="background-color: #f3f4f6;">
+                  <td style="padding: 8px; border: 1px solid #ddd;"><strong>Monto Neto:</strong></td>
+                  <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">
+                    <strong>$${transactionDetails.net_amount.toLocaleString('es-CL')}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #ddd;">
+                    Fotógrafo (${transactionDetails.photographer_percentage}%):
+                  </td>
+                  <td style="padding: 8px; border: 1px solid #ddd; text-align: right; color: #16a34a;">
+                    $${transactionDetails.photographer_share.toLocaleString('es-CL')}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #ddd;">
+                    Director (${transactionDetails.director_percentage}%):
+                  </td>
+                  <td style="padding: 8px; border: 1px solid #ddd; text-align: right; color: #2563eb;">
+                    $${transactionDetails.director_share.toLocaleString('es-CL')}
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin-top: 20px; padding: 10px; background-color: #ecfdf5; border-left: 4px solid #10b981;">
+                <strong>✅ Las fotos fueron enviadas automáticamente al cliente.</strong>
+              </p>
+
+              <p style="margin-top: 10px; font-size: 12px; color: #6b7280;">
+                Flow Order: ${paymentStatus.flowOrder} | Solicitud ID: ${requestId}
+              </p>
             `,
           });
           console.log('✅ Notificación enviada al admin');
