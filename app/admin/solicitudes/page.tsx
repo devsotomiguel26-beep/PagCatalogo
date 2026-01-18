@@ -174,16 +174,16 @@ export default function SolicitudesPage() {
 
   const statusColors = {
     pending: 'bg-yellow-100 text-yellow-800',
-    contacted: 'bg-blue-100 text-blue-800',
     paid: 'bg-green-100 text-green-800',
-    delivered: 'bg-gray-100 text-gray-800',
+    delivered: 'bg-blue-100 text-blue-800',
+    expired: 'bg-red-100 text-red-800',
   };
 
   const statusLabels = {
     pending: 'Pendiente',
-    contacted: 'Contactado',
     paid: 'Pagado',
     delivered: 'Entregado',
+    expired: 'Enlaces expirados',
   };
 
   return (
@@ -203,9 +203,9 @@ export default function SolicitudesPage() {
           {[
             { value: 'all', label: 'Todas' },
             { value: 'pending', label: 'Pendientes' },
-            { value: 'contacted', label: 'Contactadas' },
             { value: 'paid', label: 'Pagadas' },
             { value: 'delivered', label: 'Entregadas' },
+            { value: 'expired', label: 'Expiradas' },
           ].map((option) => (
             <button
               key={option.value}
