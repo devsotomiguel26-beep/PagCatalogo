@@ -179,10 +179,23 @@ export async function POST(request: NextRequest) {
           price_per_photo: pricePerPhoto,
           transaction_details: transactionDetails,
           settlement_status: 'pending',
+          payment_data: {
+            flowOrder: paymentStatus.flowOrder,
+            commerceOrder: paymentStatus.commerceOrder,
+            amount: paymentStatus.amount,
+            status: paymentStatus.status,
+            paymentType: paymentStatus.paymentType,
+            paymentData: paymentStatus.paymentData,
+            payer: paymentStatus.payer,
+            date: paymentStatus.date,
+            fee: paymentStatus.fee,
+            balance: paymentStatus.balance,
+            captured_at: new Date().toISOString(),
+          },
         })
         .eq('id', requestId);
 
-      console.log('💾 Status actualizado a "paid" con transaction_details');
+      console.log('💾 Status actualizado a "paid" con transaction_details y payment_data');
 
       // Obtener datos completos de la solicitud
       const requestData = await getRequestForDelivery(requestId);

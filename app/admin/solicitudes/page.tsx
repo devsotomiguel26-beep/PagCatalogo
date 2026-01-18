@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import Image from 'next/image';
 import ResendPhotosModal from '@/components/admin/ResendPhotosModal';
+import PaymentDetailsModal from '@/components/admin/PaymentDetailsModal';
 
 interface DeliveryHistoryEntry {
   sentAt: string;
@@ -33,6 +34,8 @@ interface PhotoRequest {
   last_delivery_email?: string | null;
   gallery_title?: string;
   gallery_slug?: string;
+  flow_order?: number | null;
+  payment_data?: any;
   galleries: {
     title: string;
     slug: string;
@@ -52,6 +55,8 @@ export default function SolicitudesPage() {
   const [requestPhotos, setRequestPhotos] = useState<Photo[]>([]);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
   const [resendModalRequest, setResendModalRequest] = useState<PhotoRequest | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentModalRequest, setPaymentModalRequest] = useState<PhotoRequest | null>(null);
 
   useEffect(() => {
     fetchRequests();
@@ -391,6 +396,20 @@ export default function SolicitudesPage() {
                               </svg>
                               {request.photos_sent_at ? 'Reenviar' : 'Enviar'} fotos
                             </button>
+                            {request.payment_data && request.status !== 'pending' && (
+                              <button
+                                onClick={() => {
+                                  setPaymentModalRequest(request);
+                                  setShowPaymentModal(true);
+                                }}
+                                className="text-green-600 hover:text-green-900 text-left flex items-center gap-1"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Ver Pago
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -486,6 +505,21 @@ export default function SolicitudesPage() {
           }}
         />
       )}
+
+      {/* Modal de detalles de pago */}
+      <PaymentDetailsModal
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setPaymentModalRequest(null);
+        }}
+        paymentData={paymentModalRequest?.payment_data}
+        clientName={paymentModalRequest?.client_name || ''}
+        clientEmail={paymentModalRequest?.client_email || ''}
+        galleryTitle={paymentModalRequest?.galleries?.title || ''}
+        photoCount={paymentModalRequest?.photo_ids?.length || 0}
+        requestId={paymentModalRequest?.id || ''}
+      />
     </div>
   );
 }
