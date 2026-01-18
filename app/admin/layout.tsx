@@ -127,6 +127,26 @@ export default function AdminLayout({
                   Solicitudes
                 </Link>
                 <Link
+                  href="/admin/fotografos"
+                  className={`inline-flex items-center px-3 py-2 text-sm font-medium ${
+                    pathname?.startsWith('/admin/fotografos')
+                      ? 'text-red-600 border-b-2 border-red-600'
+                      : 'text-gray-700 hover:text-red-600'
+                  }`}
+                >
+                  Fotógrafos
+                </Link>
+                <Link
+                  href="/admin/liquidaciones"
+                  className={`inline-flex items-center px-3 py-2 text-sm font-medium ${
+                    pathname?.startsWith('/admin/liquidaciones')
+                      ? 'text-red-600 border-b-2 border-red-600'
+                      : 'text-gray-700 hover:text-red-600'
+                  }`}
+                >
+                  Liquidaciones
+                </Link>
+                <Link
                   href="/admin/configuracion"
                   className={`inline-flex items-center px-3 py-2 text-sm font-medium ${
                     pathname?.startsWith('/admin/configuracion')
@@ -190,6 +210,26 @@ export default function AdminLayout({
               }`}
             >
               Solicitudes
+            </Link>
+            <Link
+              href="/admin/fotografos"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                pathname?.startsWith('/admin/fotografos')
+                  ? 'text-red-600 bg-red-50'
+                  : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
+              }`}
+            >
+              Fotógrafos
+            </Link>
+            <Link
+              href="/admin/liquidaciones"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                pathname?.startsWith('/admin/liquidaciones')
+                  ? 'text-red-600 bg-red-50'
+                  : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
+              }`}
+            >
+              Liquidaciones
             </Link>
             <Link
               href="/admin/configuracion"
