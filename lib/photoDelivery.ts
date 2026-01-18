@@ -78,6 +78,7 @@ export async function generateDownloadLinks(
 
 /**
  * Marca una solicitud como "fotos enviadas" y guarda la fecha de expiración
+ * AUTOMÁTICAMENTE cambia el status a 'delivered'
  * @param requestId ID de la solicitud
  * @param expiresAt Fecha de expiración de los links
  */
@@ -89,6 +90,7 @@ export async function markPhotosAsSent(
     const { error } = await supabase
       .from('photo_requests')
       .update({
+        status: 'delivered', // ✅ Cambio automático de estado
         photos_sent_at: new Date().toISOString(),
         download_links_expires_at: expiresAt.toISOString(),
       })

@@ -135,6 +135,7 @@ export async function POST(request: NextRequest) {
     const { error: updateError } = await supabase
       .from('photo_requests')
       .update({
+        status: 'delivered', // ✅ Cambio automático de estado
         photos_sent_at: new Date().toISOString(), // Actualizar a fecha más reciente
         download_links_expires_at: downloadLinks[0].expiresAt.toISOString(),
         delivery_attempts: currentDeliveryAttempts + 1,
