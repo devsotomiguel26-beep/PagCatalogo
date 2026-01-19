@@ -14,10 +14,11 @@ export async function GET(request: NextRequest) {
   try {
     console.log('📊 Obteniendo métricas del dashboard...');
 
-    // 1. Estadísticas por estado
+    // 1. Estadísticas por estado (EXCLUYE solicitudes de prueba)
     const { data: statsByStatus, error: statsError } = await supabase
       .from('photo_requests')
-      .select('status, photo_ids, created_at');
+      .select('status, photo_ids, created_at, is_test')
+      .not('is_test', 'eq', true);
 
     if (statsError) {
       console.error('Error obteniendo stats:', statsError);
@@ -106,11 +107,12 @@ export async function GET(request: NextRequest) {
     // 4. Alertas y notificaciones
     const alerts = [];
 
-    // Alerta de enlaces por expirar (próximos 2 días)
+    // Alerta de enlaces por expirar (próximos 2 días) - EXCLUYE solicitudes de prueba
     const { data: expiringRequests, error: expiringError } = await supabase
       .from('photo_requests')
-      .select('id, client_name, download_links_expires_at')
+      .select('id, client_name, download_links_expires_at, is_test')
       .eq('status', 'delivered')
+      .not('is_test', 'eq', true)
       .gte('download_links_expires_at', new Date().toISOString())
       .lte('download_links_expires_at', new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString());
 
