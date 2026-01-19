@@ -104,6 +104,7 @@ export default function RequestPhotosModal({
                     fill
                     className="object-cover"
                     sizes="100px"
+                    unoptimized={true}
                   />
                 </div>
               ))}
