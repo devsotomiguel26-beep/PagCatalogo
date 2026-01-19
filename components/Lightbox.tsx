@@ -129,6 +129,7 @@ export default function Lightbox({
             sizes="100vw"
             quality={90}
             priority
+            unoptimized={true}
           />
         </div>
       </div>
