@@ -131,11 +131,34 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
     console.log('✅ Buffer creado exitosamente');
 
-    // Optimizar imagen antes de aplicar watermark
-    console.log('🔧 Optimizando imagen...');
-    let optimizedBuffer;
+    // Generar path para catálogo (el original ya está subido)
+    const baseFileName = fileName.split('.')[0]; // Quitar extensión
+    const catalogFileName = `${baseFileName}-catalog.webp`; // WebP para mejor compresión
+    const catalogPath = `galleries/${galleryId}/${catalogFileName}`;
+
+    // PASO 1: Aplicar marca de agua sobre imagen original (JPEG/PNG más estable)
+    console.log('💧 Aplicando marca de agua...');
+    let watermarkedBuffer;
     try {
-      optimizedBuffer = await optimizeImage(buffer, {
+      // Aplicar marca de agua sin cambiar formato (mantiene JPEG/PNG original)
+      watermarkedBuffer = await processForCatalog(buffer, watermarkPathToUse, 'jpeg', 90);
+      console.log('✅ Marca de agua aplicada');
+    } catch (error: any) {
+      console.error('❌ Error aplicando watermark:', error);
+      return NextResponse.json(
+        {
+          error: 'Error aplicando marca de agua',
+          details: error.message,
+        },
+        { status: 500 }
+      );
+    }
+
+    // PASO 2: Optimizar imagen CON marca de agua a WebP
+    console.log('🔧 Optimizando imagen con marca de agua a WebP...');
+    let catalogBuffer;
+    try {
+      catalogBuffer = await optimizeImage(watermarkedBuffer, {
         maxWidth: 2000,
         maxHeight: 2000,
         quality: 85,
@@ -143,35 +166,13 @@ export async function POST(request: NextRequest) {
       });
 
       // Mostrar estadísticas de optimización
-      const stats = await getOptimizationStats(buffer, optimizedBuffer);
+      const stats = await getOptimizationStats(watermarkedBuffer, catalogBuffer);
       console.log(`✅ Imagen optimizada: ${stats.originalSize} → ${stats.optimizedSize} (${stats.reduction} reducción)`);
     } catch (error: any) {
       console.error('❌ Error optimizando imagen:', error);
       return NextResponse.json(
         {
-          error: 'Error optimizando imagen',
-          details: error.message,
-        },
-        { status: 500 }
-      );
-    }
-
-    // Generar path para catálogo (el original ya está subido)
-    const baseFileName = fileName.split('.')[0]; // Quitar extensión
-    const catalogFileName = `${baseFileName}-catalog.webp`; // WebP para mejor compresión
-    const catalogPath = `galleries/${galleryId}/${catalogFileName}`;
-
-    // 2. Procesar versión CATÁLOGO (con watermark sobre imagen optimizada)
-    console.log('💧 Aplicando marca de agua...');
-    let catalogBuffer;
-    try {
-      catalogBuffer = await processForCatalog(optimizedBuffer, watermarkPathToUse, 'webp', 85);
-      console.log('✅ Marca de agua aplicada');
-    } catch (error: any) {
-      console.error('❌ Error aplicando watermark:', error);
-      return NextResponse.json(
-        {
-          error: 'Error aplicando marca de agua',
+          error: 'Error optimizando imagen final',
           details: error.message,
         },
         { status: 500 }
