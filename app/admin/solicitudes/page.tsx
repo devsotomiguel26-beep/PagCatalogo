@@ -51,22 +51,12 @@ export default function SolicitudesPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentModalRequest, setPaymentModalRequest] = useState<PhotoRequest | null>(null);
 
-  // Log inicial para confirmar que el componente se está cargando
   useEffect(() => {
-    console.log('🚀 [INIT] Componente SolicitudesPage cargado - Versión con filtros v2');
-    console.log('🚀 [INIT] ViewFilter inicial:', 'active');
-    console.log('🚀 [INIT] StatusFilter inicial:', 'all');
-  }, []);
-
-  useEffect(() => {
-    console.log('🔄 [EFFECT] useEffect ejecutado - viewFilter:', viewFilter, 'filter:', filter);
     fetchRequests();
   }, [filter, viewFilter]);
 
   async function fetchRequests() {
     setLoading(true);
-
-    console.log('🔍 [DEBUG] Fetching requests with viewFilter:', viewFilter, 'statusFilter:', filter);
 
     let query = supabase
       .from('photo_requests')
@@ -82,37 +72,26 @@ export default function SolicitudesPage() {
     // View filters (is_test, is_archived)
     if (viewFilter === 'active') {
       // Excluir pruebas y archivadas
-      console.log('🔍 [DEBUG] Aplicando filtro: excluir is_test=true y is_archived=true');
       query = query.not('is_test', 'eq', true).not('is_archived', 'eq', true);
     } else if (viewFilter === 'test') {
-      console.log('🔍 [DEBUG] Aplicando filtro: is_test=true');
       query = query.eq('is_test', true);
     } else if (viewFilter === 'archived') {
-      console.log('🔍 [DEBUG] Aplicando filtro: is_archived=true');
       query = query.eq('is_archived', true);
     } else if (viewFilter === 'abandoned') {
-      console.log('🔍 [DEBUG] Aplicando filtro: status=abandoned');
       query = query.eq('status', 'abandoned');
     }
     // 'all' = no filter
 
     // Status filter
     if (filter !== 'all') {
-      console.log('🔍 [DEBUG] Aplicando filtro de status:', filter);
       query = query.eq('status', filter);
     }
 
     const { data, error } = await query;
 
     if (error) {
-      console.error('❌ [DEBUG] Error fetching requests:', error);
+      console.error('Error fetching requests:', error);
     } else {
-      console.log('✅ [DEBUG] Solicitudes recibidas:', data?.length);
-      console.log('📊 [DEBUG] Primeras 3 solicitudes:', data?.slice(0, 3).map(r => ({
-        name: r.client_name,
-        is_test: r.is_test,
-        is_archived: r.is_archived
-      })));
       setRequests(data as PhotoRequest[]);
     }
 
@@ -273,10 +252,6 @@ export default function SolicitudesPage() {
         <p className="mt-2 text-gray-600">
           Gestiona las solicitudes de compra de fotos de los clientes
         </p>
-        {/* Indicador de versión DEBUG */}
-        <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-          🔧 DEBUG v2.1 - ViewFilter: {viewFilter} | Mostrando: {requests.length} solicitudes
-        </div>
       </div>
 
       {/* Filtros */}
