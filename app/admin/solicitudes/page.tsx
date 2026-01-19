@@ -58,6 +58,8 @@ export default function SolicitudesPage() {
   async function fetchRequests() {
     setLoading(true);
 
+    console.log('🔍 [DEBUG] Fetching requests with viewFilter:', viewFilter, 'statusFilter:', filter);
+
     let query = supabase
       .from('photo_requests')
       .select(`
@@ -72,26 +74,37 @@ export default function SolicitudesPage() {
     // View filters (is_test, is_archived)
     if (viewFilter === 'active') {
       // Excluir pruebas y archivadas
+      console.log('🔍 [DEBUG] Aplicando filtro: excluir is_test=true y is_archived=true');
       query = query.not('is_test', 'eq', true).not('is_archived', 'eq', true);
     } else if (viewFilter === 'test') {
+      console.log('🔍 [DEBUG] Aplicando filtro: is_test=true');
       query = query.eq('is_test', true);
     } else if (viewFilter === 'archived') {
+      console.log('🔍 [DEBUG] Aplicando filtro: is_archived=true');
       query = query.eq('is_archived', true);
     } else if (viewFilter === 'abandoned') {
+      console.log('🔍 [DEBUG] Aplicando filtro: status=abandoned');
       query = query.eq('status', 'abandoned');
     }
     // 'all' = no filter
 
     // Status filter
     if (filter !== 'all') {
+      console.log('🔍 [DEBUG] Aplicando filtro de status:', filter);
       query = query.eq('status', filter);
     }
 
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching requests:', error);
+      console.error('❌ [DEBUG] Error fetching requests:', error);
     } else {
+      console.log('✅ [DEBUG] Solicitudes recibidas:', data?.length);
+      console.log('📊 [DEBUG] Primeras 3 solicitudes:', data?.slice(0, 3).map(r => ({
+        name: r.client_name,
+        is_test: r.is_test,
+        is_archived: r.is_archived
+      })));
       setRequests(data as PhotoRequest[]);
     }
 
