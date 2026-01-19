@@ -606,7 +606,7 @@ export default function DashboardPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">
-                        {new Date(gallery.event_date).toLocaleDateString('es-ES')}
+                        {new Date(gallery.event_date).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

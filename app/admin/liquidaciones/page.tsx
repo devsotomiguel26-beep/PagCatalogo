@@ -399,7 +399,7 @@ export default function SettlementsPage() {
                 settlements.map((settlement) => (
                   <tr key={settlement.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(settlement.settlement_date).toLocaleDateString('es-ES')}
+                      {new Date(settlement.settlement_date).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{settlement.recipient_name}</div>
@@ -408,8 +408,8 @@ export default function SettlementsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(settlement.period_start).toLocaleDateString('es-ES')} -{' '}
-                      {new Date(settlement.period_end).toLocaleDateString('es-ES')}
+                      {new Date(settlement.period_start).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })} -{' '}
+                      {new Date(settlement.period_end).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                       ${settlement.total_amount.toLocaleString('es-CL')}
@@ -587,7 +587,7 @@ export default function SettlementsPage() {
                       <div>
                         <span className="text-blue-700">Período:</span>
                         <span className="ml-2 font-medium">
-                          {new Date(periodStart).toLocaleDateString('es-ES')} - {new Date(periodEnd).toLocaleDateString('es-ES')}
+                          {new Date(periodStart).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })} - {new Date(periodEnd).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })}
                         </span>
                       </div>
                       <div>
@@ -626,7 +626,7 @@ export default function SettlementsPage() {
                               <td className="px-4 py-2 text-sm text-gray-900">{req.gallery_title}</td>
                               <td className="px-4 py-2 text-sm text-gray-500">{req.client_name}</td>
                               <td className="px-4 py-2 text-sm text-gray-500">
-                                {new Date(req.request_date).toLocaleDateString('es-ES')}
+                                {new Date(req.request_date).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })}
                               </td>
                               <td className="px-4 py-2 text-sm text-gray-500">{req.photo_count}</td>
                               <td className="px-4 py-2 text-sm font-semibold text-green-600">

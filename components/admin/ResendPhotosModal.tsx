@@ -157,12 +157,13 @@ export default function ResendPhotosModal({
                   </svg>
                   <span className="text-gray-700">
                     <strong>Último envío:</strong>{' '}
-                    {new Date(request.photos_sent_at!).toLocaleDateString('es-ES', {
+                    {new Date(request.photos_sent_at!).toLocaleDateString('es-CL', {
                       day: '2-digit',
                       month: 'long',
                       year: 'numeric',
                       hour: '2-digit',
                       minute: '2-digit',
+                      timeZone: 'America/Santiago',
                     })}
                   </span>
                 </div>

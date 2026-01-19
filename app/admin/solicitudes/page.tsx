@@ -361,16 +361,18 @@ export default function SolicitudesPage() {
                     return (
                       <tr key={request.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(request.created_at).toLocaleDateString('es-ES', {
+                          {new Date(request.created_at).toLocaleDateString('es-CL', {
                             day: '2-digit',
                             month: '2-digit',
                             year: 'numeric',
+                            timeZone: 'America/Santiago',
                           })}
                           <br />
                           <span className="text-xs">
-                            {new Date(request.created_at).toLocaleTimeString('es-ES', {
+                            {new Date(request.created_at).toLocaleTimeString('es-CL', {
                               hour: '2-digit',
                               minute: '2-digit',
+                              timeZone: 'America/Santiago',
                             })}
                           </span>
                         </td>

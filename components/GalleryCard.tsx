@@ -21,10 +21,11 @@ export default function GalleryCard({
   coverPhotoUrl,
   photoCount = 0,
 }: GalleryCardProps) {
-  const formattedDate = new Date(eventDate).toLocaleDateString('es-ES', {
+  const formattedDate = new Date(eventDate).toLocaleDateString('es-CL', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
+    timeZone: 'America/Santiago',
   });
 
   // Traducir tipo de evento

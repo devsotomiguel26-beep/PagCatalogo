@@ -251,14 +251,14 @@ export default function SettlementDetailPage() {
           <div>
             <span className="text-sm font-medium text-gray-500">Período:</span>
             <p className="mt-1 text-sm text-gray-900">
-              {new Date(settlement.period_start).toLocaleDateString('es-ES')} -{' '}
-              {new Date(settlement.period_end).toLocaleDateString('es-ES')}
+              {new Date(settlement.period_start).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })} -{' '}
+              {new Date(settlement.period_end).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })}
             </p>
           </div>
           <div>
             <span className="text-sm font-medium text-gray-500">Fecha de Liquidación:</span>
             <p className="mt-1 text-sm text-gray-900">
-              {new Date(settlement.settlement_date).toLocaleDateString('es-ES')}
+              {new Date(settlement.settlement_date).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })}
             </p>
           </div>
           {settlement.notes && (
@@ -307,7 +307,7 @@ export default function SettlementDetailPage() {
                       {request.client_name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(request.created_at).toLocaleDateString('es-ES')}
+                      {new Date(request.created_at).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {request.photo_ids?.length || 0}
