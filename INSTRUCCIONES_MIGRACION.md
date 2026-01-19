@@ -16,7 +16,7 @@ Agrega la capacidad de ver comprobantes de pago completos desde Flow en el panel
 - Click en **"New Query"**
 
 ### 3. Ejecutar el SQL
-- Copia **TODO** el contenido de: `supabase-add-payment-details.sql`
+- Copia **TODO** el contenido de: `supabase-fix-missing-columns.sql`
 - Pega en el editor
 - Click **"Run"** (o Cmd/Ctrl + Enter)
 
@@ -70,3 +70,19 @@ Deberías ver:
 - Solo aparece en solicitudes con `status != 'pending'`
 - Solo en solicitudes que tienen `payment_data` (pagos nuevos después de la migración)
 - Pagos antiguos NO tendrán el botón (se captura desde el próximo pago)
+
+---
+
+## ✅ ESTADO: MIGRACIÓN COMPLETADA
+
+**Fecha de ejecución**: 2026-01-18
+**Resultado**: Exitoso ✅
+
+Columnas verificadas:
+- ✅ flow_order (BIGINT)
+- ✅ payment_data (JSONB)
+- ✅ payment_date (TIMESTAMPTZ)
+- ✅ transaction_details (JSONB)
+- ✅ settlement_status (TEXT)
+
+El sistema de validación de pagos está completamente operativo.
