@@ -138,12 +138,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Calcular total de la liquidación
+    // Soporta AMBAS estructuras de transaction_details (nueva y antigua)
     const totalAmount = requests.reduce((sum, request) => {
       if (!request.transaction_details) return sum;
 
+      const td = request.transaction_details;
+
+      // COALESCE: intentar nivel superior primero, luego breakdown
       const share = recipient_type === 'photographer'
-        ? request.transaction_details.breakdown?.photographer_share || 0
-        : request.transaction_details.breakdown?.director_share || 0;
+        ? td.photographer_share || td.breakdown?.photographer_share || 0
+        : td.director_share || td.breakdown?.director_share || 0;
 
       return sum + parseFloat(share.toString());
     }, 0);

@@ -43,12 +43,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ajustar period_end para incluir todo el día (hasta 23:59:59.999)
+    // Si period_end es "2026-01-19", debe incluir hasta "2026-01-19T23:59:59.999Z"
+    const periodEndAdjusted = period_end.includes('T')
+      ? period_end // Ya tiene hora, no ajustar
+      : `${period_end}T23:59:59.999Z`; // Agregar fin de día
+
     // Construir query según el tipo de destinatario
     let query = supabase
       .from('pending_earnings')
       .select('*')
       .gte('request_date', period_start)
-      .lte('request_date', period_end)
+      .lte('request_date', periodEndAdjusted)
       .order('request_date', { ascending: false });
 
     // Filtrar por fotógrafo si aplica
