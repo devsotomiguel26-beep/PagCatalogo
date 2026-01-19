@@ -372,6 +372,7 @@ export default function SolicitudesPage() {
                             {new Date(request.created_at).toLocaleTimeString('es-CL', {
                               hour: '2-digit',
                               minute: '2-digit',
+                              hour12: false,
                               timeZone: 'America/Santiago',
                             })}
                           </span>
