@@ -51,7 +51,15 @@ export default function SolicitudesPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentModalRequest, setPaymentModalRequest] = useState<PhotoRequest | null>(null);
 
+  // Log inicial para confirmar que el componente se está cargando
   useEffect(() => {
+    console.log('🚀 [INIT] Componente SolicitudesPage cargado - Versión con filtros v2');
+    console.log('🚀 [INIT] ViewFilter inicial:', 'active');
+    console.log('🚀 [INIT] StatusFilter inicial:', 'all');
+  }, []);
+
+  useEffect(() => {
+    console.log('🔄 [EFFECT] useEffect ejecutado - viewFilter:', viewFilter, 'filter:', filter);
     fetchRequests();
   }, [filter, viewFilter]);
 
@@ -265,6 +273,10 @@ export default function SolicitudesPage() {
         <p className="mt-2 text-gray-600">
           Gestiona las solicitudes de compra de fotos de los clientes
         </p>
+        {/* Indicador de versión DEBUG */}
+        <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+          🔧 DEBUG v2.1 - ViewFilter: {viewFilter} | Mostrando: {requests.length} solicitudes
+        </div>
       </div>
 
       {/* Filtros */}
