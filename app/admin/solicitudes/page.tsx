@@ -23,6 +23,11 @@ interface PhotoRequest {
   gallery_slug?: string;
   flow_order?: number | null;
   payment_data?: any;
+  is_test?: boolean;
+  is_archived?: boolean;
+  cancelled_at?: string | null;
+  cancelled_by?: string | null;
+  cancel_reason?: string | null;
   galleries: {
     title: string;
     slug: string;
@@ -38,6 +43,7 @@ export default function SolicitudesPage() {
   const [requests, setRequests] = useState<PhotoRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
+  const [viewFilter, setViewFilter] = useState<'active' | 'all' | 'archived' | 'abandoned' | 'test'>('active');
   const [selectedRequest, setSelectedRequest] = useState<PhotoRequest | null>(null);
   const [requestPhotos, setRequestPhotos] = useState<Photo[]>([]);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
@@ -47,7 +53,7 @@ export default function SolicitudesPage() {
 
   useEffect(() => {
     fetchRequests();
-  }, [filter]);
+  }, [filter, viewFilter]);
 
   async function fetchRequests() {
     setLoading(true);
@@ -63,6 +69,19 @@ export default function SolicitudesPage() {
       `)
       .order('created_at', { ascending: false });
 
+    // View filters (is_test, is_archived)
+    if (viewFilter === 'active') {
+      query = query.eq('is_test', false).eq('is_archived', false);
+    } else if (viewFilter === 'test') {
+      query = query.eq('is_test', true);
+    } else if (viewFilter === 'archived') {
+      query = query.eq('is_archived', true);
+    } else if (viewFilter === 'abandoned') {
+      query = query.eq('status', 'abandoned');
+    }
+    // 'all' = no filter
+
+    // Status filter
     if (filter !== 'all') {
       query = query.eq('status', filter);
     }
@@ -92,6 +111,48 @@ export default function SolicitudesPage() {
       if (selectedRequest?.id === requestId) {
         setSelectedRequest({ ...selectedRequest, status: newStatus });
       }
+    }
+  }
+
+  async function markAsTest(requestId: string) {
+    if (!confirm('¿Marcar esta solicitud como prueba? No aparecerá en reportes ni liquidaciones.')) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from('photo_requests')
+      .update({ is_test: true })
+      .eq('id', requestId);
+
+    if (error) {
+      console.error('Error marking as test:', error);
+      alert('Error al marcar como prueba');
+    } else {
+      fetchRequests();
+      alert('Solicitud marcada como prueba');
+    }
+  }
+
+  async function cancelRequest(requestId: string) {
+    const reason = prompt('Razón de la cancelación:');
+    if (!reason) return;
+
+    const { error } = await supabase
+      .from('photo_requests')
+      .update({
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancelled_by: 'admin',
+        cancel_reason: reason,
+      })
+      .eq('id', requestId);
+
+    if (error) {
+      console.error('Error cancelling request:', error);
+      alert('Error al cancelar la solicitud');
+    } else {
+      fetchRequests();
+      alert('Solicitud cancelada');
     }
   }
 
@@ -169,6 +230,8 @@ export default function SolicitudesPage() {
     paid: 'bg-green-100 text-green-800',
     delivered: 'bg-blue-100 text-blue-800',
     expired: 'bg-red-100 text-red-800',
+    cancelled: 'bg-gray-100 text-gray-800',
+    abandoned: 'bg-orange-100 text-orange-800',
   };
 
   const statusLabels = {
@@ -176,6 +239,8 @@ export default function SolicitudesPage() {
     paid: 'Pagado',
     delivered: 'Entregado',
     expired: 'Enlaces expirados',
+    cancelled: 'Cancelado',
+    abandoned: 'Abandonado',
   };
 
   return (
@@ -189,15 +254,43 @@ export default function SolicitudesPage() {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-lg shadow mb-6 p-4">
-        <div className="flex items-center space-x-4 flex-wrap gap-2">
-          <span className="text-sm font-medium text-gray-700">Mostrar:</span>
+      <div className="bg-white rounded-lg shadow mb-6 p-4 space-y-4">
+        {/* View Filter */}
+        <div className="flex items-center space-x-4 flex-wrap gap-2 pb-4 border-b border-gray-200">
+          <span className="text-sm font-medium text-gray-700">Vista:</span>
           {[
-            { value: 'all', label: 'Todas' },
+            { value: 'active', label: '✅ Activas', description: 'Excluye pruebas y archivadas' },
+            { value: 'all', label: '📋 Todas', description: 'Incluye todo' },
+            { value: 'test', label: '🧪 Pruebas', description: 'Solo pruebas' },
+            { value: 'abandoned', label: '🗑️ Abandonadas', description: 'Pendientes >48h' },
+            { value: 'archived', label: '📦 Archivadas', description: 'Historial antiguo' },
+          ].map((option) => (
+            <button
+              key={option.value}
+              onClick={() => setViewFilter(option.value as any)}
+              className={`px-4 py-2 rounded-md text-sm font-medium ${
+                viewFilter === option.value
+                  ? 'bg-devil-100 text-devil-700 border-2 border-devil-400'
+                  : 'text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+              title={option.description}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Status Filter */}
+        <div className="flex items-center space-x-4 flex-wrap gap-2">
+          <span className="text-sm font-medium text-gray-700">Estado:</span>
+          {[
+            { value: 'all', label: 'Todos' },
             { value: 'pending', label: 'Pendientes' },
             { value: 'paid', label: 'Pagadas' },
             { value: 'delivered', label: 'Entregadas' },
             { value: 'expired', label: 'Expiradas' },
+            { value: 'cancelled', label: 'Canceladas' },
+            { value: 'abandoned', label: 'Abandonadas' },
           ].map((option) => (
             <button
               key={option.value}
@@ -277,8 +370,18 @@ export default function SolicitudesPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
                             {request.client_name}
+                            {request.is_test && (
+                              <span className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                                🧪 Prueba
+                              </span>
+                            )}
+                            {request.is_archived && (
+                              <span className="inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                📦 Archivada
+                              </span>
+                            )}
                           </div>
                           <div className="text-sm text-gray-500 flex items-center gap-2">
                             {request.client_email}
@@ -383,6 +486,31 @@ export default function SolicitudesPage() {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 Ver Pago
+                              </button>
+                            )}
+                            <div className="border-t border-gray-200 my-1"></div>
+                            {!request.is_test && (
+                              <button
+                                onClick={() => markAsTest(request.id)}
+                                className="text-purple-600 hover:text-purple-900 text-left flex items-center gap-1"
+                                title="Marcar como prueba"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 008 10.586V5L7 4z" />
+                                </svg>
+                                Marcar como Prueba
+                              </button>
+                            )}
+                            {request.status === 'pending' && !request.is_test && (
+                              <button
+                                onClick={() => cancelRequest(request.id)}
+                                className="text-red-600 hover:text-red-900 text-left flex items-center gap-1"
+                                title="Cancelar solicitud"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Cancelar
                               </button>
                             )}
                           </div>
