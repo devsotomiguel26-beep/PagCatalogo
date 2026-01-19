@@ -6,12 +6,16 @@ interface WatermarkOptions {
   opacity?: number; // 0-100
   position?: 'center' | 'bottom-right' | 'top-right';
   scale?: number; // 0-1, tamaño del logo relativo a la imagen
+  format?: 'webp' | 'jpeg' | 'png'; // Formato de salida
+  quality?: number; // Calidad de compresión (1-100)
 }
 
 const DEFAULT_OPTIONS: WatermarkOptions = {
   opacity: 50,
   position: 'center',
   scale: 0.8, // Logo será 50% del ancho de la imagen
+  format: 'webp',
+  quality: 85,
 };
 
 /**
@@ -103,8 +107,8 @@ export async function addWatermark(
       top = 20;
     }
 
-    // Aplicar marca de agua
-    const outputBuffer = await sharp(inputBuffer)
+    // Aplicar marca de agua y convertir al formato deseado
+    let pipeline = sharp(inputBuffer)
       .composite([
         {
           input: watermarkBuffer,
@@ -112,10 +116,21 @@ export async function addWatermark(
           left,
           top,
         },
-      ])
-      .jpeg({ quality: 85 })
-      .toBuffer();
+      ]);
 
+    // Convertir al formato especificado
+    const format = opts.format || 'webp';
+    const quality = opts.quality || 85;
+
+    if (format === 'webp') {
+      pipeline = pipeline.webp({ quality });
+    } else if (format === 'jpeg') {
+      pipeline = pipeline.jpeg({ quality });
+    } else if (format === 'png') {
+      pipeline = pipeline.png({ quality, compressionLevel: 9 });
+    }
+
+    const outputBuffer = await pipeline.toBuffer();
     return outputBuffer;
   } catch (error) {
     console.error('Error adding watermark:', error);
@@ -124,32 +139,29 @@ export async function addWatermark(
 }
 
 /**
- * Procesa una imagen para el catálogo: optimiza y agrega marca de agua
- * @param inputBuffer Buffer de la imagen original
+ * Procesa una imagen para el catálogo: agrega marca de agua
+ * @param inputBuffer Buffer de la imagen (ya debe estar optimizada)
  * @param watermarkPath Path o URL de la marca de agua (opcional)
- * @returns Buffer de la imagen optimizada con marca de agua
+ * @param format Formato de salida (webp, jpeg, png)
+ * @param quality Calidad de compresión (1-100)
+ * @returns Buffer de la imagen con marca de agua
  */
 export async function processForCatalog(
   inputBuffer: Buffer,
-  watermarkPath?: string
+  watermarkPath?: string,
+  format: 'webp' | 'jpeg' | 'png' = 'webp',
+  quality: number = 85
 ): Promise<Buffer> {
   try {
-    // Primero optimizar tamaño para web (máximo 1920x1080)
-    const resizedBuffer = await sharp(inputBuffer)
-      .resize(1920, 1080, {
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
-      .jpeg({ quality: 85 })
-      .toBuffer();
-
-    // Luego agregar marca de agua
+    // Solo agregar marca de agua (la imagen ya viene optimizada)
     const watermarkedBuffer = await addWatermark(
-      resizedBuffer,
+      inputBuffer,
       {
         opacity: 50,
         position: 'center',
         scale: 0.8,
+        format,
+        quality,
       },
       watermarkPath
     );

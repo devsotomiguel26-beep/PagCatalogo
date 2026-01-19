@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { processForCatalog, processOriginal } from '@/lib/watermark';
+import { optimizeImage, getOptimizationStats } from '@/lib/imageOptimizer';
 
 // Crear cliente Supabase con permisos de admin para server-side
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -130,16 +131,41 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
     console.log('✅ Buffer creado exitosamente');
 
+    // Optimizar imagen antes de aplicar watermark
+    console.log('🔧 Optimizando imagen...');
+    let optimizedBuffer;
+    try {
+      optimizedBuffer = await optimizeImage(buffer, {
+        maxWidth: 2000,
+        maxHeight: 2000,
+        quality: 85,
+        format: 'webp'
+      });
+
+      // Mostrar estadísticas de optimización
+      const stats = await getOptimizationStats(buffer, optimizedBuffer);
+      console.log(`✅ Imagen optimizada: ${stats.originalSize} → ${stats.optimizedSize} (${stats.reduction} reducción)`);
+    } catch (error: any) {
+      console.error('❌ Error optimizando imagen:', error);
+      return NextResponse.json(
+        {
+          error: 'Error optimizando imagen',
+          details: error.message,
+        },
+        { status: 500 }
+      );
+    }
+
     // Generar path para catálogo (el original ya está subido)
     const baseFileName = fileName.split('.')[0]; // Quitar extensión
-    const catalogFileName = `${baseFileName}-catalog.jpg`; // Siempre JPG para catálogo
+    const catalogFileName = `${baseFileName}-catalog.webp`; // WebP para mejor compresión
     const catalogPath = `galleries/${galleryId}/${catalogFileName}`;
 
-    // 2. Procesar versión CATÁLOGO (con watermark)
+    // 2. Procesar versión CATÁLOGO (con watermark sobre imagen optimizada)
     console.log('💧 Aplicando marca de agua...');
     let catalogBuffer;
     try {
-      catalogBuffer = await processForCatalog(buffer, watermarkPathToUse);
+      catalogBuffer = await processForCatalog(optimizedBuffer, watermarkPathToUse, 'webp', 85);
       console.log('✅ Marca de agua aplicada');
     } catch (error: any) {
       console.error('❌ Error aplicando watermark:', error);
@@ -157,7 +183,7 @@ export async function POST(request: NextRequest) {
     const { error: catalogError } = await supabase.storage
       .from('gallery-images')
       .upload(catalogPath, catalogBuffer, {
-        contentType: 'image/jpeg',
+        contentType: 'image/webp',
         cacheControl: '3600',
         upsert: false,
       });
