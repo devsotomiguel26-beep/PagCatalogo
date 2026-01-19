@@ -40,24 +40,40 @@ export default function PhotoGrid({ photos, onPhotoClick, favorites, onToggleFav
     );
   }
 
+  // Prevenir clic derecho en imágenes
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    alert('Las fotos están protegidas. Todas las fotos incluyen marca de agua.');
+    return false;
+  };
+
+  // Prevenir drag & drop
+  const handleDragStart = (e: React.DragEvent) => {
+    e.preventDefault();
+    return false;
+  };
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
       {photos.map((photo, index) => (
         <div
           key={photo.id}
-          className="relative aspect-square bg-gray-100 overflow-hidden cursor-pointer group"
+          className="relative aspect-square bg-gray-100 overflow-hidden cursor-pointer group select-none"
           onClick={() => onPhotoClick(index)}
+          onContextMenu={handleContextMenu}
+          onDragStart={handleDragStart}
         >
           <Image
             src={photo.public_url}
             alt={`Foto ${index + 1}`}
             fill
-            className="object-cover hover-subtle"
+            className="object-cover hover-subtle pointer-events-none"
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             quality={80}
             placeholder="blur"
             blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwABmQ/9k="
             unoptimized={true}
+            draggable={false}
           />
 
           {/* Checkbox minimalista en la esquina */}

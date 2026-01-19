@@ -32,6 +32,19 @@ export default function Lightbox({
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === photos.length - 1;
 
+  // Prevenir clic derecho en imágenes
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    alert('Las fotos están protegidas. Todas las fotos incluyen marca de agua.');
+    return false;
+  };
+
+  // Prevenir drag & drop
+  const handleDragStart = (e: React.DragEvent) => {
+    e.preventDefault();
+    return false;
+  };
+
   // Manejo de teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -119,17 +132,22 @@ export default function Lightbox({
       )}
 
       {/* Imagen principal - fondo blanco */}
-      <div className="relative w-full h-full flex items-center justify-center pt-16">
+      <div
+        className="relative w-full h-full flex items-center justify-center pt-16 select-none"
+        onContextMenu={handleContextMenu}
+        onDragStart={handleDragStart}
+      >
         <div className="relative max-w-6xl max-h-full w-full h-full p-8">
           <Image
             src={currentPhoto.public_url}
             alt={`Foto ${currentIndex + 1}`}
             fill
-            className="object-contain"
+            className="object-contain pointer-events-none"
             sizes="100vw"
             quality={90}
             priority
             unoptimized={true}
+            draggable={false}
           />
         </div>
       </div>
