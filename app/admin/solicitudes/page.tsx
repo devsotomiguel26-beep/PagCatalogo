@@ -71,7 +71,8 @@ export default function SolicitudesPage() {
 
     // View filters (is_test, is_archived)
     if (viewFilter === 'active') {
-      query = query.eq('is_test', false).eq('is_archived', false);
+      // Excluir pruebas y archivadas
+      query = query.not('is_test', 'eq', true).not('is_archived', 'eq', true);
     } else if (viewFilter === 'test') {
       query = query.eq('is_test', true);
     } else if (viewFilter === 'archived') {
