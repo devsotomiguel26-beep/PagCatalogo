@@ -2,16 +2,6 @@
 
 import { useState } from 'react';
 
-interface DeliveryHistoryEntry {
-  sentAt: string;
-  sentTo: string;
-  sentBy?: string;
-  linksExpireAt: string;
-  photoCount: number;
-  wasResend?: boolean;
-  emailChanged?: boolean;
-}
-
 interface ResendPhotosModalProps {
   request: {
     id: string;
@@ -21,9 +11,6 @@ interface ResendPhotosModalProps {
     photo_ids: string[];
     photos_sent_at?: string | null;
     download_links_expires_at?: string | null;
-    delivery_attempts?: number;
-    delivery_history?: DeliveryHistoryEntry[];
-    last_delivery_email?: string | null;
     galleries: {
       title: string;
     } | null;
@@ -37,7 +24,7 @@ export default function ResendPhotosModal({
   onClose,
   onSuccess,
 }: ResendPhotosModalProps) {
-  const [email, setEmail] = useState(request.last_delivery_email || request.client_email);
+  const [email, setEmail] = useState(request.client_email);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -180,23 +167,6 @@ export default function ResendPhotosModal({
                   </span>
                 </div>
 
-                {request.last_delivery_email && request.last_delivery_email !== request.client_email && (
-                  <div className="flex items-start gap-2">
-                    <svg className="w-5 h-5 text-blue-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                    </svg>
-                    <div>
-                      <p className="text-sm text-gray-700">
-                        <strong>Email original:</strong> {request.client_email}
-                      </p>
-                      <p className="text-sm text-blue-700">
-                        <strong>Último email usado:</strong> {request.last_delivery_email}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
                 {daysRemaining !== null && (
                   <div className="flex items-start gap-2">
                     {linksExpired ? (
@@ -226,16 +196,6 @@ export default function ResendPhotosModal({
                   </div>
                 )}
 
-                {request.delivery_attempts && request.delivery_attempts > 0 && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-gray-700">
-                      <strong>Intentos de entrega:</strong> {request.delivery_attempts}
-                    </span>
-                  </div>
-                )}
               </>
             )}
           </div>
@@ -337,50 +297,6 @@ export default function ResendPhotosModal({
               </button>
             </div>
           </form>
-
-          {/* Historial de entregas */}
-          {request.delivery_history && request.delivery_history.length > 0 && (
-            <div className="border-t pt-6">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                Historial de entregas ({request.delivery_history.length})
-              </h3>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {request.delivery_history.map((entry, index) => (
-                  <div
-                    key={index}
-                    className="bg-gray-50 rounded-lg p-3 text-xs border border-gray-200"
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <span className="font-medium text-gray-900">
-                        Envío #{request.delivery_history!.length - index}
-                        {entry.wasResend && (
-                          <span className="ml-2 text-blue-600">(Reenvío)</span>
-                        )}
-                      </span>
-                      <span className="text-gray-500">
-                        {new Date(entry.sentAt).toLocaleDateString('es-ES', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </span>
-                    </div>
-                    <div className="space-y-0.5 text-gray-600">
-                      <div>Email: {entry.sentTo}</div>
-                      {entry.emailChanged && (
-                        <div className="text-blue-600">✓ Email actualizado</div>
-                      )}
-                      <div>
-                        Enlaces expiraban:{' '}
-                        {new Date(entry.linksExpireAt).toLocaleDateString('es-ES')}
-                      </div>
-                      {entry.sentBy && <div>Enviado por: {entry.sentBy}</div>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

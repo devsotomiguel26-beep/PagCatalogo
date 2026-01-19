@@ -19,7 +19,9 @@
       "Bash(node:*)",
       "Bash(git remote set-url:*)",
       "Bash(git config:*)",
-      "Bash(git diff:*)"
+      "Bash(git diff:*)",
+      "Bash(source .env.local)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

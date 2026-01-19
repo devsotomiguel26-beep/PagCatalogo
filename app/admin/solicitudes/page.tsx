@@ -7,16 +7,6 @@ import Image from 'next/image';
 import ResendPhotosModal from '@/components/admin/ResendPhotosModal';
 import PaymentDetailsModal from '@/components/admin/PaymentDetailsModal';
 
-interface DeliveryHistoryEntry {
-  sentAt: string;
-  sentTo: string;
-  sentBy?: string;
-  linksExpireAt: string;
-  photoCount: number;
-  wasResend?: boolean;
-  emailChanged?: boolean;
-}
-
 interface PhotoRequest {
   id: string;
   gallery_id: string | null;
@@ -29,9 +19,6 @@ interface PhotoRequest {
   created_at: string;
   photos_sent_at?: string | null;
   download_links_expires_at?: string | null;
-  delivery_attempts?: number;
-  delivery_history?: DeliveryHistoryEntry[];
-  last_delivery_email?: string | null;
   gallery_title?: string;
   gallery_slug?: string;
   flow_order?: number | null;
@@ -294,9 +281,9 @@ export default function SolicitudesPage() {
                             {request.client_name}
                           </div>
                           <div className="text-sm text-gray-500 flex items-center gap-2">
-                            {request.last_delivery_email || request.client_email}
+                            {request.client_email}
                             <button
-                              onClick={() => copyToClipboard(request.last_delivery_email || request.client_email)}
+                              onClick={() => copyToClipboard(request.client_email)}
                               className="text-blue-600 hover:text-blue-800"
                               title="Copiar email"
                             >
@@ -305,11 +292,6 @@ export default function SolicitudesPage() {
                               </svg>
                             </button>
                           </div>
-                          {request.last_delivery_email && request.last_delivery_email !== request.client_email && (
-                            <div className="text-xs text-blue-600 mt-1">
-                              Original: {request.client_email}
-                            </div>
-                          )}
                           {request.client_phone && (
                             <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -350,19 +332,12 @@ export default function SolicitudesPage() {
                           {request.photo_ids.length}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex flex-col gap-1">
-                            <span
-                              className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${deliveryStatus.color}`}
-                            >
-                              <span>{deliveryStatus.icon}</span>
-                              <span>{deliveryStatus.label}</span>
-                            </span>
-                            {request.delivery_attempts && request.delivery_attempts > 1 && (
-                              <span className="text-xs text-gray-500">
-                                {request.delivery_attempts} envíos
-                              </span>
-                            )}
-                          </div>
+                          <span
+                            className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${deliveryStatus.color}`}
+                          >
+                            <span>{deliveryStatus.icon}</span>
+                            <span>{deliveryStatus.label}</span>
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <select
@@ -484,6 +459,7 @@ export default function SolicitudesPage() {
                         fill
                         className="object-cover"
                         sizes="200px"
+                        unoptimized={true}
                       />
                     </div>
                   ))}

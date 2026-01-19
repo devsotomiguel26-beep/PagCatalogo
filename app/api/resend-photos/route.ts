@@ -113,56 +113,41 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Email enviado exitosamente');
 
-    // 7. Obtener historial actual de entregas
-    const currentDeliveryHistory = Array.isArray(requestData.delivery_history)
-      ? requestData.delivery_history
-      : [];
-
-    const currentDeliveryAttempts = requestData.delivery_attempts || 0;
-
-    // 8. Crear registro del nuevo envío
-    const deliveryRecord = {
-      sentAt: new Date().toISOString(),
-      sentTo: destinationEmail,
-      sentBy: sentBy || 'admin',
-      linksExpireAt: downloadLinks[0].expiresAt.toISOString(),
-      photoCount: downloadLinks.length,
-      wasResend: currentDeliveryAttempts > 0,
-      emailChanged: newEmail && newEmail !== requestData.client_email,
+    // 7. Actualizar solicitud (solo campos que existen en la BD)
+    const updateData: any = {
+      status: 'delivered', // ✅ Cambio automático de estado
+      photos_sent_at: new Date().toISOString(), // Actualizar a fecha más reciente
+      download_links_expires_at: downloadLinks[0].expiresAt.toISOString(),
     };
 
-    // 9. Actualizar solicitud con nuevo historial
+    // Si el email cambió, actualizar también el client_email
+    if (newEmail && newEmail !== requestData.client_email) {
+      updateData.client_email = newEmail;
+      console.log('📝 Actualizando client_email a:', newEmail);
+    }
+
     const { error: updateError } = await supabase
       .from('photo_requests')
-      .update({
-        status: 'delivered', // ✅ Cambio automático de estado
-        photos_sent_at: new Date().toISOString(), // Actualizar a fecha más reciente
-        download_links_expires_at: downloadLinks[0].expiresAt.toISOString(),
-        delivery_attempts: currentDeliveryAttempts + 1,
-        delivery_history: [...currentDeliveryHistory, deliveryRecord],
-        last_delivery_email: destinationEmail,
-        // Si el email cambió, actualizar también el client_email
-        ...(newEmail && { client_email: newEmail }),
-      })
+      .update(updateData)
       .eq('id', requestId);
 
     if (updateError) {
       console.error('❌ Error actualizando solicitud:', updateError);
-      throw new Error('Error actualizando el historial de entregas');
+      throw new Error('Error actualizando la solicitud. Por favor intenta nuevamente.');
     }
 
     console.log('✅ Solicitud actualizada con nuevo historial');
 
-    // 10. Enviar notificación al admin (opcional)
+    // 8. Enviar notificación al admin (opcional)
     const adminEmail = process.env.ADMIN_EMAIL;
     if (adminEmail) {
       try {
         await sendEmail({
           to: adminEmail,
-          subject: `Fotos reenviadas a ${requestData.client_name}`,
+          subject: `Fotos ${requestData.photos_sent_at ? 'reenviadas' : 'enviadas'} a ${requestData.client_name}`,
           html: `
-            <h2>Fotos Reenviadas Exitosamente</h2>
-            <p><strong>Detalles del reenvío:</strong></p>
+            <h2>Fotos ${requestData.photos_sent_at ? 'Reenviadas' : 'Enviadas'} Exitosamente</h2>
+            <p><strong>Detalles del envío:</strong></p>
             <ul>
               <li><strong>Cliente:</strong> ${requestData.client_name}</li>
               <li><strong>Email original:</strong> ${requestData.client_email}</li>
@@ -171,9 +156,8 @@ export async function POST(request: NextRequest) {
               <li><strong>Niño/a:</strong> ${requestData.child_name}</li>
               <li><strong>Galería:</strong> ${requestData.galleries?.title}</li>
               <li><strong>Fotos:</strong> ${downloadLinks.length}</li>
-              <li><strong>Intento de entrega #:</strong> ${currentDeliveryAttempts + 1}</li>
               <li><strong>Enlaces expiran:</strong> ${downloadLinks[0].expiresAt.toLocaleDateString('es-ES')}</li>
-              <li><strong>Reenviado por:</strong> ${sentBy || 'Sistema'}</li>
+              <li><strong>Enviado por:</strong> ${sentBy || 'Sistema'}</li>
             </ul>
           `,
         });
@@ -185,11 +169,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: newEmail
-        ? `Fotos reenviadas exitosamente a ${destinationEmail}`
-        : 'Fotos reenviadas exitosamente',
+        ? `Fotos ${requestData.photos_sent_at ? 'reenviadas' : 'enviadas'} exitosamente a ${destinationEmail}`
+        : `Fotos ${requestData.photos_sent_at ? 'reenviadas' : 'enviadas'} exitosamente`,
       photosSent: downloadLinks.length,
       expiresAt: downloadLinks[0].expiresAt,
-      deliveryAttempt: currentDeliveryAttempts + 1,
       emailChanged: !!newEmail,
       linksRegenerated: linksExpired,
     });
