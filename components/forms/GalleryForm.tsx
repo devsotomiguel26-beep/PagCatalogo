@@ -8,6 +8,12 @@ interface Category {
   name: string;
 }
 
+interface Photographer {
+  id: string;
+  name: string;
+  active: boolean;
+}
+
 interface GalleryFormData {
   title: string;
   slug: string;
@@ -18,6 +24,7 @@ interface GalleryFormData {
   location: string;
   status: string;
   watermark_path?: string | null;
+  photographer_id?: string | null;
 }
 
 interface GalleryFormProps {
@@ -36,6 +43,7 @@ export default function GalleryForm({
   galleryId,
 }: GalleryFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [photographers, setPhotographers] = useState<Photographer[]>([]);
   const [formData, setFormData] = useState<GalleryFormData>({
     title: initialData?.title || '',
     slug: initialData?.slug || '',
@@ -46,6 +54,7 @@ export default function GalleryForm({
     location: initialData?.location || '',
     status: initialData?.status || 'draft',
     watermark_path: initialData?.watermark_path || null,
+    photographer_id: initialData?.photographer_id || null,
   });
 
   // Estados para manejo de marca de agua personalizada
@@ -62,6 +71,7 @@ export default function GalleryForm({
 
   useEffect(() => {
     fetchCategories();
+    fetchPhotographers();
   }, []);
 
   useEffect(() => {
@@ -90,6 +100,18 @@ export default function GalleryForm({
     }
   }
 
+  async function fetchPhotographers() {
+    const { data, error } = await supabase
+      .from('photographers')
+      .select('id, name, active')
+      .eq('active', true)
+      .order('name');
+
+    if (!error && data) {
+      setPhotographers(data);
+    }
+  }
+
   // Generar slug automáticamente desde el título
   function generateSlug(title: string) {
     return title
@@ -114,7 +136,9 @@ export default function GalleryForm({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Convertir string vacío a null para photographer_id
+    const finalValue = name === 'photographer_id' && value === '' ? null : value;
+    setFormData((prev) => ({ ...prev, [name]: finalValue }));
   }
 
   function handleWatermarkSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -282,6 +306,43 @@ export default function GalleryForm({
               </svg>
             </div>
           </div>
+        </div>
+
+        {/* Fotógrafo asignado */}
+        <div>
+          <label htmlFor="photographer_id" className="block text-sm font-medium text-gray-900 mb-2">
+            Fotógrafo Asignado <span className="text-gray-400">(opcional)</span>
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <select
+              id="photographer_id"
+              name="photographer_id"
+              value={formData.photographer_id || ''}
+              onChange={handleChange}
+              className="w-full pl-10 pr-3 py-3 bg-white text-gray-900 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-devil-600 focus:border-devil-600 transition-colors appearance-none cursor-pointer"
+            >
+              <option value="" className="text-gray-600">Sin asignar (Director)</option>
+              {photographers.map((photographer) => (
+                <option key={photographer.id} value={photographer.id} className="text-gray-900">
+                  {photographer.name}
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            💡 Selecciona el fotógrafo que tomó las fotos de este evento. Las ganancias se asignarán automáticamente.
+          </p>
         </div>
 
         {/* Fecha del evento */}

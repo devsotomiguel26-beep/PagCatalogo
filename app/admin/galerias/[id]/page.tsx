@@ -21,6 +21,7 @@ interface GalleryFormData {
   watermark_path?: string | null;
   cover_photo_id?: string | null;
   cover_thumbnail_url?: string | null;
+  photographer_id?: string | null;
 }
 
 interface Photo {
@@ -137,6 +138,7 @@ export default function EditGaleriaPage() {
           location: data.location || null,
           status: data.status,
           watermark_path: watermarkPathToSave,
+          photographer_id: data.photographer_id || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', galleryId);
@@ -146,7 +148,7 @@ export default function EditGaleriaPage() {
       }
 
       setSuccessMessage('Galería actualizada correctamente');
-      setGallery({ ...data, watermark_path: watermarkPathToSave });
+      setGallery({ ...data, watermark_path: watermarkPathToSave, photographer_id: data.photographer_id });
 
       // Limpiar mensaje después de 3 segundos
       setTimeout(() => setSuccessMessage(''), 3000);

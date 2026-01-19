@@ -16,6 +16,7 @@ interface GalleryFormData {
   location: string;
   status: string;
   watermark_path?: string | null;
+  photographer_id?: string | null;
 }
 
 export default function NuevaGaleriaPage() {
@@ -58,6 +59,7 @@ export default function NuevaGaleriaPage() {
             event_date: data.event_date,
             location: data.location || null,
             status: data.status,
+            photographer_id: data.photographer_id || null,
           },
         ])
         .select()
