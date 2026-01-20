@@ -147,6 +147,16 @@ export default function AdminLayout({
                   Liquidaciones
                 </Link>
                 <Link
+                  href="/admin/reportes"
+                  className={`inline-flex items-center px-3 py-2 text-sm font-medium ${
+                    pathname?.startsWith('/admin/reportes')
+                      ? 'text-red-600 border-b-2 border-red-600'
+                      : 'text-gray-700 hover:text-red-600'
+                  }`}
+                >
+                  Reportes
+                </Link>
+                <Link
                   href="/admin/configuracion"
                   className={`inline-flex items-center px-3 py-2 text-sm font-medium ${
                     pathname?.startsWith('/admin/configuracion')
@@ -230,6 +240,16 @@ export default function AdminLayout({
               }`}
             >
               Liquidaciones
+            </Link>
+            <Link
+              href="/admin/reportes"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                pathname?.startsWith('/admin/reportes')
+                  ? 'text-red-600 bg-red-50'
+                  : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
+              }`}
+            >
+              Reportes
             </Link>
             <Link
               href="/admin/configuracion"
