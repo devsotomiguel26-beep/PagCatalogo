@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
         created_at,
         flow_order,
         transaction_details,
+        payment_data,
         is_test,
         galleries (
           id,
@@ -123,6 +124,23 @@ export async function GET(request: NextRequest) {
       const pctCheck = Math.abs((photographerPct + directorPct) - 100) < 0.01;
       const grossCheck = Math.abs((netAmount + gatewayFee) - grossAmount) < 0.01;
 
+      // Estado de depósito de Flow
+      let flowDepositStatus = null;
+      let flowTransferDate = null;
+
+      if (req.payment_data?.paymentData?.transferDate) {
+        const transferDate = new Date(req.payment_data.paymentData.transferDate);
+        const now = new Date();
+
+        flowTransferDate = transferDate.toISOString();
+
+        if (transferDate <= now) {
+          flowDepositStatus = 'depositado';
+        } else {
+          flowDepositStatus = 'por_depositar';
+        }
+      }
+
       return {
         id: req.id,
         payment_date: req.payment_date,
@@ -146,6 +164,8 @@ export async function GET(request: NextRequest) {
         director_pct: directorPct,
         settlement_status: req.settlement_status,
         flow_order: req.flow_order,
+        flow_deposit_status: flowDepositStatus,
+        flow_transfer_date: flowTransferDate,
         status: req.status,
         // Banderas de verificación
         sum_check: sumCheck,

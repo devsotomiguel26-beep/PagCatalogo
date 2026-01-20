@@ -32,6 +32,8 @@ interface ReportItem {
   director_pct: number;
   settlement_status: string;
   flow_order: number | null;
+  flow_deposit_status: 'depositado' | 'por_depositar' | null;
+  flow_transfer_date: string | null;
   status: string;
   sum_check: boolean;
   pct_check: boolean;
@@ -166,6 +168,8 @@ export default function ReportesPage() {
       '% Director',
       'Estado Liquidación',
       'Orden Flow',
+      'Estado Depósito Flow',
+      'Fecha Transferencia Flow',
       'Estado',
       'Verificación OK',
     ];
@@ -191,6 +195,8 @@ export default function ReportesPage() {
       item.director_pct.toFixed(2),
       item.settlement_status === 'settled' ? 'Liquidado' : 'Pendiente',
       item.flow_order || '',
+      item.flow_deposit_status === 'depositado' ? 'Depositado' : item.flow_deposit_status === 'por_depositar' ? 'Por Depositar' : 'N/A',
+      item.flow_transfer_date ? new Date(item.flow_transfer_date).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' }) : '',
       item.status,
       item.all_checks_pass ? 'Sí' : 'No',
     ]);
@@ -217,6 +223,8 @@ export default function ReportesPage() {
       reportData.totals.avg_director_pct.toFixed(2),
       `${reportData.totals.settled} liquidadas / ${reportData.totals.pending_liquidation} pendientes`,
       '',
+      '', // Estado Depósito Flow
+      '', // Fecha Transferencia Flow
       '',
       '',
     ]);
@@ -496,6 +504,7 @@ export default function ReportesPage() {
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Fotógrafo</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Director</th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Liquidación</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Depósito Flow</th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Verificación</th>
                     </tr>
                   </thead>
@@ -562,6 +571,19 @@ export default function ReportesPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-center">
+                          {item.flow_deposit_status === 'depositado' ? (
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800" title={item.flow_transfer_date ? `Transferido el ${new Date(item.flow_transfer_date).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })}` : ''}>
+                              Depositado
+                            </span>
+                          ) : item.flow_deposit_status === 'por_depositar' ? (
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800" title={item.flow_transfer_date ? `Se depositará el ${new Date(item.flow_transfer_date).toLocaleDateString('es-CL', { timeZone: 'America/Santiago' })}` : ''}>
+                              Por Depositar
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">N/A</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-center">
                           {item.all_checks_pass ? (
                             <span className="inline-flex items-center text-green-600" title="Todas las verificaciones pasaron">
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -618,6 +640,7 @@ export default function ReportesPage() {
                         <br />
                         {reportData.totals.pending_liquidation} pendientes
                       </td>
+                      <td className="px-4 py-4"></td>
                       <td className="px-4 py-4"></td>
                     </tr>
                   </tfoot>
