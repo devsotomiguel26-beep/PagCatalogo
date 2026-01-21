@@ -180,6 +180,7 @@ export async function POST(request: NextRequest) {
           transaction_details: transactionDetails,
           settlement_status: 'pending',
           payment_data: {
+            token: token, // Guardar token para futuras consultas a Flow API
             flowOrder: paymentStatus.flowOrder,
             commerceOrder: paymentStatus.commerceOrder,
             amount: paymentStatus.amount,

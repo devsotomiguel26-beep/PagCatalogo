@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getBatchFlowDepositStatus } from '@/lib/flowApi';
 
 // Cliente Supabase con permisos de admin
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -96,6 +97,33 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Consultar estado de depósito de Flow en tiempo real
+    console.log('🔄 Consultando estado de depósito en Flow...');
+    const flowRequests = filteredRequests
+      .filter(req => req.flow_order)
+      .map(req => ({
+        flowOrder: req.flow_order!,
+        token: req.payment_data?.token || null,
+      }));
+
+    let flowDepositStatuses = new Map<string, 'depositado' | 'por_depositar' | null>();
+
+    if (flowRequests.length > 0) {
+      try {
+        flowDepositStatuses = await getBatchFlowDepositStatus(flowRequests);
+        console.log(`✅ Estados de Flow obtenidos: ${flowDepositStatuses.size} órdenes`);
+
+        // Contar cuántas consultas no se pudieron hacer por falta de token
+        const withoutToken = flowRequests.filter(r => !r.token).length;
+        if (withoutToken > 0) {
+          console.warn(`⚠️ ${withoutToken} órdenes sin token (datos históricos)`);
+        }
+      } catch (error) {
+        console.error('❌ Error consultando Flow API:', error);
+        // Continuar sin estados de Flow si falla
+      }
+    }
+
     // Transformar datos para la tabla
     const reportData = filteredRequests.map(req => {
       const td = req.transaction_details || {};
@@ -124,21 +152,18 @@ export async function GET(request: NextRequest) {
       const pctCheck = Math.abs((photographerPct + directorPct) - 100) < 0.01;
       const grossCheck = Math.abs((netAmount + gatewayFee) - grossAmount) < 0.01;
 
-      // Estado de depósito de Flow
-      let flowDepositStatus = null;
+      // Estado de depósito de Flow (obtenido en tiempo real de la API)
+      let flowDepositStatus: 'depositado' | 'por_depositar' | null = null;
       let flowTransferDate = null;
 
+      if (req.flow_order) {
+        // Usar estado obtenido de la API de Flow
+        flowDepositStatus = flowDepositStatuses.get(req.flow_order.toString()) || null;
+      }
+
+      // Obtener fecha de transferencia si existe en payment_data
       if (req.payment_data?.paymentData?.transferDate) {
-        const transferDate = new Date(req.payment_data.paymentData.transferDate);
-        const now = new Date();
-
-        flowTransferDate = transferDate.toISOString();
-
-        if (transferDate <= now) {
-          flowDepositStatus = 'depositado';
-        } else {
-          flowDepositStatus = 'por_depositar';
-        }
+        flowTransferDate = new Date(req.payment_data.paymentData.transferDate).toISOString();
       }
 
       return {
