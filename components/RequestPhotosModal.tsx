@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import PricingDisplay from './PricingDisplay';
 
 interface Photo {
   id: string;
@@ -116,6 +117,11 @@ export default function RequestPhotosModal({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Pricing Display */}
+          <div className="mb-6">
+            <PricingDisplay selectedPhotoCount={photos.length} />
           </div>
 
           {/* Error message */}

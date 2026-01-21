@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createFlowPayment } from '@/lib/flowPayment';
 import { supabase } from '@/lib/supabaseClient';
+import { calculatePrice } from '@/lib/pricingTiers';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-const PRICE_PER_PHOTO = parseInt(process.env.PRICE_PER_PHOTO || '2000', 10); // Configurable via env
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,17 +47,24 @@ export async function POST(request: NextRequest) {
     // Si la galería fue eliminada, usar el título desnormalizado
     const galleryTitle = photoRequest.galleries?.title || photoRequest.gallery_title || 'Galería';
 
-    // Calcular monto
+    // Calcular precio con sistema de tiers
     const photoCount = photoRequest.photo_ids.length;
-    const amount = photoCount * PRICE_PER_PHOTO;
+    const pricing = calculatePrice(photoCount);
 
-    console.log('📸 Fotos:', photoCount, '| Monto:', amount);
+    console.log('📸 Fotos:', photoCount);
+    console.log('💰 Pricing:', {
+      tier: pricing.tierName,
+      basePrice: pricing.basePrice,
+      effectivePrice: pricing.effectivePrice,
+      discount: pricing.discountPercentage + '%',
+      total: pricing.totalPrice,
+    });
 
-    // Crear pago en Flow
+    // Crear pago en Flow con precio efectivo (con descuento aplicado)
     const flowPayment = await createFlowPayment({
       commerceOrder: requestId,
       subject: `Fotos ${photoRequest.child_name} - ${galleryTitle}`,
-      amount: amount,
+      amount: pricing.totalPrice,
       email: photoRequest.client_email,
       urlConfirmation: `${APP_URL}/api/webhooks/flow`,
       urlReturn: `${APP_URL}/api/payment/return`,
@@ -65,10 +72,17 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Pago Flow creado:', flowPayment.flowOrder);
 
-    // Guardar flowOrder en la solicitud
+    // Guardar flowOrder y datos de pricing en la solicitud
     await supabase
       .from('photo_requests')
-      .update({ flow_order: flowPayment.flowOrder })
+      .update({
+        flow_order: flowPayment.flowOrder,
+        base_price_per_photo: pricing.basePrice,
+        price_per_photo: pricing.effectivePrice,
+        discount_amount: pricing.discountAmount,
+        discount_percentage: pricing.discountPercentage,
+        tier_name: pricing.tierName,
+      })
       .eq('id', requestId);
 
     // Retornar URL de pago
@@ -76,7 +90,15 @@ export async function POST(request: NextRequest) {
       success: true,
       paymentUrl: `${flowPayment.url}?token=${flowPayment.token}`,
       flowOrder: flowPayment.flowOrder,
-      amount: amount,
+      amount: pricing.totalPrice,
+      pricing: {
+        photoCount: pricing.photoCount,
+        tierName: pricing.tierName,
+        discountPercentage: pricing.discountPercentage,
+        discountAmount: pricing.discountAmount,
+        baseTotal: pricing.baseTotalPrice,
+        total: pricing.totalPrice,
+      },
     });
   } catch (error: any) {
     console.error('❌ Error creando pago Flow:', error);
