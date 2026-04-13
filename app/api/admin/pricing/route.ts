@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { invalidatePricingCache } from '@/lib/pricingTiers';
 
 export const dynamic = 'force-dynamic';
 
@@ -97,6 +98,7 @@ export async function PUT(request: NextRequest) {
       throw error;
     }
 
+    invalidatePricingCache();
     return NextResponse.json({
       success: true,
       data,

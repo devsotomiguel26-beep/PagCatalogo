@@ -55,6 +55,13 @@ function isCacheValid(): boolean {
   return cache !== null && (Date.now() - cache.timestamp) < CACHE_TTL_MS;
 }
 
+/**
+ * Invalida el cache en memoria para forzar lectura fresca de la DB
+ */
+export function invalidatePricingCache() {
+  cache = null;
+}
+
 // --- Lectura desde base de datos ---
 
 interface DbPricingTier {

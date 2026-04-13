@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { invalidatePricingCache } from '@/lib/pricingTiers';
 
 export const dynamic = 'force-dynamic';
 
@@ -113,6 +114,7 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
+    invalidatePricingCache();
     return NextResponse.json({
       success: true,
       data,
@@ -231,6 +233,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    invalidatePricingCache();
     return NextResponse.json({
       success: true,
       data,
@@ -303,6 +306,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    invalidatePricingCache();
     return NextResponse.json({
       success: true,
       message: 'Tier eliminado exitosamente',
