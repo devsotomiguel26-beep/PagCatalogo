@@ -2,6 +2,15 @@
 
 import { useEffect, useState } from 'react';
 
+interface PromotionInfo {
+  id: string;
+  name: string;
+  type: string;
+  discountAmount: number;
+  promoCodeId?: string;
+  promoCode?: string;
+}
+
 interface PricingData {
   photoCount: number;
   basePrice: number;
@@ -11,6 +20,7 @@ interface PricingData {
   discountAmount: number;
   discountPercentage: number;
   tierName: string;
+  promotion?: PromotionInfo | null;
   nextTier: {
     name: string;
     minPhotos: number;
@@ -19,14 +29,82 @@ interface PricingData {
   } | null;
 }
 
-interface PricingDisplayProps {
-  selectedPhotoCount: number;
+interface ValidatedPromo {
+  promotion: {
+    id: string;
+    name: string;
+    description: string | null;
+    type: string;
+    discount_percentage: number | null;
+    discount_amount: number | null;
+    fixed_price_per_photo: number | null;
+    min_photos: number;
+    ends_at: string | null;
+  };
+  promo_code_id: string;
 }
 
-export default function PricingDisplay({ selectedPhotoCount }: PricingDisplayProps) {
+interface PricingDisplayProps {
+  selectedPhotoCount: number;
+  galleryId?: string;
+  promoCode?: string;
+  onPromoValidated?: (promo: ValidatedPromo | null) => void;
+}
+
+export default function PricingDisplay({
+  selectedPhotoCount,
+  galleryId,
+  promoCode,
+  onPromoValidated,
+}: PricingDisplayProps) {
   const [pricing, setPricing] = useState<PricingData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [validatedPromo, setValidatedPromo] = useState<ValidatedPromo | null>(null);
+  const [promoError, setPromoError] = useState('');
 
+  // Validar código promo cuando cambia
+  useEffect(() => {
+    if (!promoCode || promoCode.trim().length === 0) {
+      setValidatedPromo(null);
+      setPromoError('');
+      onPromoValidated?.(null);
+      return;
+    }
+
+    const validateCode = async () => {
+      try {
+        const res = await fetch('/api/pricing/validate-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: promoCode,
+            gallery_id: galleryId,
+            photo_count: selectedPhotoCount,
+          }),
+        });
+        const data = await res.json();
+
+        if (data.valid) {
+          setValidatedPromo(data);
+          setPromoError('');
+          onPromoValidated?.(data);
+        } else {
+          setValidatedPromo(null);
+          setPromoError(data.error || 'Código inválido');
+          onPromoValidated?.(null);
+        }
+      } catch {
+        setPromoError('Error validando código');
+        setValidatedPromo(null);
+        onPromoValidated?.(null);
+      }
+    };
+
+    const timer = setTimeout(validateCode, 500); // Debounce
+    return () => clearTimeout(timer);
+  }, [promoCode, galleryId, selectedPhotoCount]);
+
+  // Calcular precio
   useEffect(() => {
     if (selectedPhotoCount === 0) {
       setPricing(null);
@@ -36,15 +114,24 @@ export default function PricingDisplay({ selectedPhotoCount }: PricingDisplayPro
     const fetchPricing = async () => {
       setLoading(true);
       try {
+        const body: Record<string, any> = {
+          photo_count: selectedPhotoCount,
+          gallery_id: galleryId,
+        };
+
+        if (validatedPromo) {
+          body.promo_code = promoCode;
+          body.promo_code_id = validatedPromo.promo_code_id;
+          body.promo_promotion = validatedPromo.promotion;
+        }
+
         const res = await fetch('/api/pricing/calculate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ photo_count: selectedPhotoCount }),
+          body: JSON.stringify(body),
         });
 
-        if (!res.ok) {
-          throw new Error('Error calculando precio');
-        }
+        if (!res.ok) throw new Error('Error calculando precio');
 
         const data = await res.json();
         setPricing(data);
@@ -57,7 +144,7 @@ export default function PricingDisplay({ selectedPhotoCount }: PricingDisplayPro
     };
 
     fetchPricing();
-  }, [selectedPhotoCount]);
+  }, [selectedPhotoCount, galleryId, validatedPromo]);
 
   if (selectedPhotoCount === 0) {
     return (
@@ -77,13 +164,38 @@ export default function PricingDisplay({ selectedPhotoCount }: PricingDisplayPro
   }
 
   const hasDiscount = pricing.discountPercentage > 0;
+  const hasPromotion = pricing.promotion && pricing.promotion.discountAmount > 0;
 
   return (
     <div className="space-y-4">
+      {/* Banner de promoción activa */}
+      {hasPromotion && (
+        <div className="rounded-xl border-2 border-purple-400 bg-gradient-to-br from-purple-50 to-purple-100 p-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🏷️</span>
+            <div>
+              <div className="text-sm font-bold text-purple-800">
+                {pricing.promotion!.name}
+              </div>
+              <div className="text-xs text-purple-600">
+                Ahorro adicional: -${pricing.promotion!.discountAmount.toLocaleString('es-CL')}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error de código promo */}
+      {promoError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+          <p className="text-sm text-red-700">{promoError}</p>
+        </div>
+      )}
+
       {/* Información del tier actual */}
       <div
         className={`rounded-xl border-2 p-6 transition-all ${
-          hasDiscount
+          hasDiscount || hasPromotion
             ? 'border-green-500 bg-gradient-to-br from-green-50 to-green-100'
             : 'border-gray-300 bg-white'
         }`}
@@ -96,7 +208,7 @@ export default function PricingDisplay({ selectedPhotoCount }: PricingDisplayPro
                 {pricing.tierName}
               </div>
               <div className="text-sm font-semibold text-green-600">
-                {pricing.discountPercentage}% de descuento
+                {pricing.discountPercentage}% de descuento por volumen
               </div>
             </div>
           </div>
@@ -107,7 +219,7 @@ export default function PricingDisplay({ selectedPhotoCount }: PricingDisplayPro
             {pricing.photoCount} {pricing.photoCount === 1 ? 'foto seleccionada' : 'fotos seleccionadas'}
           </div>
 
-          {hasDiscount && (
+          {(hasDiscount || hasPromotion) && (
             <>
               <div className="flex items-center justify-between text-sm text-gray-500">
                 <span>Precio normal:</span>
@@ -116,7 +228,7 @@ export default function PricingDisplay({ selectedPhotoCount }: PricingDisplayPro
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm font-medium text-green-600">
-                <span>Descuento:</span>
+                <span>Descuento total:</span>
                 <span>-${pricing.discountAmount.toLocaleString('es-CL')}</span>
               </div>
               <div className="my-2 border-t border-gray-300"></div>
@@ -138,7 +250,7 @@ export default function PricingDisplay({ selectedPhotoCount }: PricingDisplayPro
       </div>
 
       {/* Incentivo para siguiente tier */}
-      {pricing.nextTier && (
+      {pricing.nextTier && !hasPromotion && (
         <div className="rounded-lg border-2 border-blue-300 bg-blue-50 p-4">
           <div className="flex items-start gap-3">
             <span className="text-2xl">💡</span>
@@ -157,7 +269,7 @@ export default function PricingDisplay({ selectedPhotoCount }: PricingDisplayPro
       )}
 
       {/* Información sobre los packs disponibles */}
-      {selectedPhotoCount < 5 && (
+      {selectedPhotoCount < 5 && !hasPromotion && (
         <div className="rounded-lg bg-gray-50 p-4">
           <p className="mb-2 text-sm font-semibold text-gray-700">
             Packs disponibles:

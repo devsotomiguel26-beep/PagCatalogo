@@ -1,14 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createFlowPayment } from '@/lib/flowPayment';
 import { supabase } from '@/lib/supabaseClient';
-import { calculatePrice } from '@/lib/pricingTiers';
+import { calculatePriceWithPromotions } from '@/lib/pricingTiers';
+import { createClient } from '@supabase/supabase-js';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+// Service role client para actualizar usos de promociones
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, supabaseServiceKey);
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { requestId } = body;
+    const { requestId, promoCode, promoCodeId, promoPromotion } = body;
 
     if (!requestId) {
       return NextResponse.json(
@@ -28,6 +33,7 @@ export async function POST(request: NextRequest) {
         client_email,
         child_name,
         photo_ids,
+        gallery_id,
         gallery_title,
         galleries (
           title
@@ -47,9 +53,15 @@ export async function POST(request: NextRequest) {
     // Si la galería fue eliminada, usar el título desnormalizado
     const galleryTitle = photoRequest.galleries?.title || photoRequest.gallery_title || 'Galería';
 
-    // Calcular precio con sistema de tiers
+    // Calcular precio con tiers + promociones
     const photoCount = photoRequest.photo_ids.length;
-    const pricing = await calculatePrice(photoCount);
+    const pricing = await calculatePriceWithPromotions(
+      photoCount,
+      photoRequest.gallery_id,
+      promoCode,
+      promoCodeId,
+      promoPromotion,
+    );
 
     console.log('📸 Fotos:', photoCount);
     console.log('💰 Pricing:', {
@@ -58,9 +70,10 @@ export async function POST(request: NextRequest) {
       effectivePrice: pricing.effectivePrice,
       discount: pricing.discountPercentage + '%',
       total: pricing.totalPrice,
+      promotion: pricing.promotion?.name || 'ninguna',
     });
 
-    // Crear pago en Flow con precio efectivo (con descuento aplicado)
+    // Crear pago en Flow con precio efectivo (con descuentos aplicados)
     const flowPayment = await createFlowPayment({
       commerceOrder: requestId,
       subject: `Fotos ${photoRequest.child_name} - ${galleryTitle}`,
@@ -73,17 +86,81 @@ export async function POST(request: NextRequest) {
     console.log('✅ Pago Flow creado:', flowPayment.flowOrder);
 
     // Guardar flowOrder y datos de pricing en la solicitud
+    const updateData: Record<string, any> = {
+      flow_order: flowPayment.flowOrder,
+      base_price_per_photo: pricing.basePrice,
+      price_per_photo: pricing.effectivePrice,
+      discount_amount: pricing.discountAmount,
+      discount_percentage: pricing.discountPercentage,
+      tier_name: pricing.tierName,
+    };
+
+    // Guardar datos de promoción si aplica
+    if (pricing.promotion) {
+      updateData.promotion_id = pricing.promotion.id;
+      updateData.promotion_name = pricing.promotion.name;
+      updateData.promotion_discount_amount = pricing.promotion.discountAmount;
+      if (pricing.promotion.promoCodeId) {
+        updateData.promo_code_id = pricing.promotion.promoCodeId;
+      }
+    }
+
     await supabase
       .from('photo_requests')
-      .update({
-        flow_order: flowPayment.flowOrder,
-        base_price_per_photo: pricing.basePrice,
-        price_per_photo: pricing.effectivePrice,
-        discount_amount: pricing.discountAmount,
-        discount_percentage: pricing.discountPercentage,
-        tier_name: pricing.tierName,
-      })
+      .update(updateData)
       .eq('id', requestId);
+
+    // Incrementar contadores de uso de promoción y código
+    if (pricing.promotion) {
+      await supabaseAdmin
+        .from('promotions')
+        .update({ current_uses: supabaseAdmin.rpc ? undefined : 0 })
+        .eq('id', pricing.promotion.id);
+
+      // Incrementar current_uses atómicamente via RPC o update directo
+      await supabaseAdmin.rpc('increment_promotion_uses', { promo_id: pricing.promotion.id }).catch(() => {
+        // Fallback: update directo (no atómico pero funcional)
+        supabaseAdmin
+          .from('promotions')
+          .select('current_uses')
+          .eq('id', pricing.promotion!.id)
+          .single()
+          .then(({ data }) => {
+            if (data) {
+              supabaseAdmin
+                .from('promotions')
+                .update({ current_uses: data.current_uses + 1 })
+                .eq('id', pricing.promotion!.id);
+            }
+          });
+      });
+
+      if (pricing.promotion.promoCodeId) {
+        await supabaseAdmin.rpc('increment_promo_code_uses', { code_id: pricing.promotion.promoCodeId }).catch(() => {
+          supabaseAdmin
+            .from('promo_codes')
+            .select('current_uses')
+            .eq('id', pricing.promotion!.promoCodeId!)
+            .single()
+            .then(({ data }) => {
+              if (data) {
+                supabaseAdmin
+                  .from('promo_codes')
+                  .update({ current_uses: data.current_uses + 1 })
+                  .eq('id', pricing.promotion!.promoCodeId!);
+              }
+            });
+        });
+      }
+
+      // Registrar uso en tabla de auditoría
+      await supabaseAdmin.from('promotion_usage').insert([{
+        promotion_id: pricing.promotion.id,
+        promo_code_id: pricing.promotion.promoCodeId || null,
+        photo_request_id: requestId,
+        discount_applied: pricing.promotion.discountAmount,
+      }]);
+    }
 
     // Retornar URL de pago
     return NextResponse.json({
@@ -98,6 +175,10 @@ export async function POST(request: NextRequest) {
         discountAmount: pricing.discountAmount,
         baseTotal: pricing.baseTotalPrice,
         total: pricing.totalPrice,
+        promotion: pricing.promotion ? {
+          name: pricing.promotion.name,
+          discountAmount: pricing.promotion.discountAmount,
+        } : null,
       },
     });
   } catch (error: any) {

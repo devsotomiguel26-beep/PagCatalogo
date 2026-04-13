@@ -22,6 +22,16 @@ export interface PricingCalculation {
   discountPercentage: number;
   tierName: string;
   tier: PricingTier;
+  promotion?: PromotionApplied | null;
+}
+
+export interface PromotionApplied {
+  id: string;
+  name: string;
+  type: string;
+  discountAmount: number;
+  promoCodeId?: string;
+  promoCode?: string;
 }
 
 export interface NextTierInfo {
@@ -223,6 +233,186 @@ export async function getNextTier(currentPhotoCount: number): Promise<NextTierIn
     discountPercentage: nextTier.discountPercentage,
     photosToUnlock: nextTier.minPhotos - currentPhotoCount,
   };
+}
+
+// --- Promociones ---
+
+interface DbPromotion {
+  id: string;
+  name: string;
+  type: string;
+  discount_percentage: number | null;
+  discount_amount: number | null;
+  fixed_price_per_photo: number | null;
+  scope: string;
+  scope_gallery_id: string | null;
+  scope_category_id: string | null;
+  scope_event_type: string | null;
+  min_photos: number;
+  max_uses: number | null;
+  current_uses: number;
+  requires_code: boolean;
+  starts_at: string;
+  ends_at: string | null;
+  is_active: boolean;
+  priority: number;
+  stackable: boolean;
+}
+
+/**
+ * Busca promociones activas que apliquen a una galería específica
+ */
+async function findActivePromotions(galleryId?: string): Promise<DbPromotion[]> {
+  const now = new Date().toISOString();
+
+  let query = supabase
+    .from('promotions')
+    .select('*')
+    .eq('is_active', true)
+    .eq('requires_code', false) // Solo las automáticas (sin código)
+    .lte('starts_at', now)
+    .order('priority', { ascending: false });
+
+  const { data, error } = await query;
+
+  if (error || !data) return [];
+
+  // Filtrar por fecha de término y scope
+  const filtered = data.filter((promo: DbPromotion) => {
+    // Validar fecha de término
+    if (promo.ends_at && new Date(promo.ends_at) < new Date()) return false;
+
+    // Validar usos
+    if (promo.max_uses !== null && promo.current_uses >= promo.max_uses) return false;
+
+    // Validar scope
+    if (promo.scope === 'global') return true;
+
+    // Si no hay galleryId, solo aplican las globales
+    if (!galleryId) return promo.scope === 'global';
+
+    return true; // Se validará en detalle después
+  });
+
+  // Si hay galleryId, verificar scopes específicos
+  if (galleryId && filtered.some(p => p.scope !== 'global')) {
+    const { data: gallery } = await supabase
+      .from('galleries')
+      .select('id, category_id, event_type')
+      .eq('id', galleryId)
+      .single();
+
+    if (gallery) {
+      return filtered.filter((promo: DbPromotion) => {
+        if (promo.scope === 'global') return true;
+        if (promo.scope === 'gallery') return promo.scope_gallery_id === galleryId;
+        if (promo.scope === 'category') return promo.scope_category_id === gallery.category_id;
+        if (promo.scope === 'event_type') return promo.scope_event_type === gallery.event_type;
+        return false;
+      });
+    }
+  }
+
+  return filtered.filter((p: DbPromotion) => p.scope === 'global');
+}
+
+/**
+ * Aplica una promoción sobre un cálculo de precio base
+ */
+function applyPromotion(
+  basePricing: PricingCalculation,
+  promo: DbPromotion,
+  promoCodeId?: string,
+  promoCode?: string,
+): PricingCalculation {
+  let promoDiscountAmount = 0;
+  let finalTotal = basePricing.totalPrice;
+
+  switch (promo.type) {
+    case 'percentage_discount':
+      promoDiscountAmount = Math.round(basePricing.totalPrice * (promo.discount_percentage || 0) / 100);
+      finalTotal = basePricing.totalPrice - promoDiscountAmount;
+      break;
+
+    case 'fixed_discount':
+      promoDiscountAmount = Math.min(promo.discount_amount || 0, basePricing.totalPrice);
+      finalTotal = basePricing.totalPrice - promoDiscountAmount;
+      break;
+
+    case 'fixed_price_per_photo':
+      if (promo.fixed_price_per_photo !== null) {
+        finalTotal = promo.fixed_price_per_photo * basePricing.photoCount;
+        promoDiscountAmount = basePricing.totalPrice - finalTotal;
+      }
+      break;
+
+    case 'full_gallery':
+      if (promo.fixed_price_per_photo !== null) {
+        finalTotal = promo.fixed_price_per_photo * basePricing.photoCount;
+        promoDiscountAmount = basePricing.totalPrice - finalTotal;
+      }
+      break;
+  }
+
+  // Nunca cobrar negativo
+  if (finalTotal < 0) finalTotal = 0;
+  if (promoDiscountAmount < 0) promoDiscountAmount = 0;
+
+  return {
+    ...basePricing,
+    totalPrice: finalTotal,
+    effectivePrice: Math.round(finalTotal / basePricing.photoCount),
+    discountAmount: basePricing.discountAmount + promoDiscountAmount,
+    promotion: {
+      id: promo.id,
+      name: promo.name,
+      type: promo.type,
+      discountAmount: promoDiscountAmount,
+      promoCodeId,
+      promoCode,
+    },
+  };
+}
+
+/**
+ * Calcula precio con tiers + promociones activas
+ * Extiende calculatePrice() con soporte de promociones automáticas y códigos promo
+ */
+export async function calculatePriceWithPromotions(
+  photoCount: number,
+  galleryId?: string,
+  promoCode?: string,
+  promoCodeId?: string,
+  promoPromotion?: any, // Promoción ya validada desde validate-code
+): Promise<PricingCalculation> {
+  // Primero calcular precio base con tiers
+  const basePricing = await calculatePrice(photoCount);
+
+  // Si se proporcionó un código promo ya validado, aplicar su promoción
+  if (promoPromotion && promoCodeId) {
+    if (photoCount >= (promoPromotion.min_photos || 1)) {
+      return applyPromotion(basePricing, promoPromotion, promoCodeId, promoCode);
+    }
+  }
+
+  // Buscar promociones automáticas activas
+  try {
+    const activePromos = await findActivePromotions(galleryId);
+
+    // Filtrar por min_photos
+    const applicablePromos = activePromos.filter(p => photoCount >= (p.min_photos || 1));
+
+    if (applicablePromos.length === 0) {
+      return { ...basePricing, promotion: null };
+    }
+
+    // Aplicar la promoción de mayor prioridad (ya están ordenadas por priority DESC)
+    const bestPromo = applicablePromos[0];
+    return applyPromotion(basePricing, bestPromo);
+  } catch {
+    // Si falla la búsqueda de promos, retornar precio base sin promoción
+    return { ...basePricing, promotion: null };
+  }
 }
 
 /**

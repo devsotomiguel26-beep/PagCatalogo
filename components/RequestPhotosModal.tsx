@@ -20,6 +20,9 @@ interface RequestPhotosModalProps {
     email: string;
     phone: string;
     childName: string;
+    promoCode?: string;
+    promoCodeId?: string;
+    promoPromotion?: any;
   }) => Promise<void>;
 }
 
@@ -28,12 +31,15 @@ export default function RequestPhotosModal({
   onClose,
   photos,
   galleryTitle,
+  galleryId,
   onSubmit,
 }: RequestPhotosModalProps) {
   const [parentName, setParentName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [childName, setChildName] = useState('');
+  const [promoCode, setPromoCode] = useState('');
+  const [validatedPromo, setValidatedPromo] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -45,13 +51,23 @@ export default function RequestPhotosModal({
     setIsSubmitting(true);
 
     try {
-      await onSubmit({ parentName, email, phone, childName });
+      await onSubmit({
+        parentName,
+        email,
+        phone,
+        childName,
+        promoCode: validatedPromo ? promoCode : undefined,
+        promoCodeId: validatedPromo?.promo_code_id,
+        promoPromotion: validatedPromo?.promotion,
+      });
 
       // Reset form
       setParentName('');
       setEmail('');
       setPhone('');
       setChildName('');
+      setPromoCode('');
+      setValidatedPromo(null);
 
       // Close modal after short delay
       setTimeout(onClose, 1500);
@@ -119,9 +135,39 @@ export default function RequestPhotosModal({
             </div>
           </div>
 
+          {/* Código Promocional */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Código promocional <span className="text-gray-400">(opcional)</span>
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent font-mono text-sm"
+                placeholder="Ej: VERANO2026"
+                disabled={isSubmitting}
+              />
+              {promoCode && validatedPromo && (
+                <span className="flex items-center px-3 text-green-600 text-sm font-medium">
+                  <svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  Aplicado
+                </span>
+              )}
+            </div>
+          </div>
+
           {/* Pricing Display */}
           <div className="mb-6">
-            <PricingDisplay selectedPhotoCount={photos.length} />
+            <PricingDisplay
+              selectedPhotoCount={photos.length}
+              galleryId={galleryId}
+              promoCode={promoCode}
+              onPromoValidated={setValidatedPromo}
+            />
           </div>
 
           {/* Error message */}

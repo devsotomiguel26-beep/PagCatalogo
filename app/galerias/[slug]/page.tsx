@@ -12,6 +12,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import FloatingCartButton from '@/components/FloatingCartButton';
 import RequestPhotosModal from '@/components/RequestPhotosModal';
 import Toast from '@/components/Toast';
+import PromotionBanner from '@/components/PromotionBanner';
 
 interface Category {
   id: string;
@@ -164,6 +165,9 @@ export default function GaleriaPage() {
     email: string;
     phone: string;
     childName: string;
+    promoCode?: string;
+    promoCodeId?: string;
+    promoPromotion?: any;
   }) => {
     if (!gallery) return;
 
@@ -224,6 +228,9 @@ export default function GaleriaPage() {
         },
         body: JSON.stringify({
           requestId: insertedData.id,
+          promoCode: data.promoCode,
+          promoCodeId: data.promoCodeId,
+          promoPromotion: data.promoPromotion,
         }),
       });
 
@@ -346,6 +353,11 @@ export default function GaleriaPage() {
             </div>
           </div>
         </section>
+
+        {/* Banner de promociones activas */}
+        <div className="max-w-6xl mx-auto px-8 lg:px-12 pt-8">
+          <PromotionBanner galleryId={gallery?.id} />
+        </div>
 
         {/* Grid de fotos - espaciado generoso */}
         <section className="max-w-6xl mx-auto px-8 lg:px-12 py-12 lg:py-16">
