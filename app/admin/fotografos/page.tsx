@@ -420,7 +420,7 @@ export default function PhotographersPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
                   />
                 </div>
 
@@ -434,7 +434,7 @@ export default function PhotographersPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
                   />
                 </div>
 
@@ -448,7 +448,7 @@ export default function PhotographersPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
                   />
                 </div>
 
@@ -463,7 +463,7 @@ export default function PhotographersPage() {
                       setFormData({ ...formData, rut: e.target.value })
                     }
                     placeholder="12345678-9"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
                   />
                 </div>
 
@@ -476,7 +476,7 @@ export default function PhotographersPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, tax_id_type: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
                   >
                     <option value="ninguno">Ninguno</option>
                     <option value="boleta">Boleta de Honorarios</option>
@@ -494,7 +494,7 @@ export default function PhotographersPage() {
                       setFormData({ ...formData, notes: e.target.value })
                     }
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
                     placeholder="Notas o comentarios adicionales"
                   />
                 </div>

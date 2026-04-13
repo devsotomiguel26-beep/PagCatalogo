@@ -136,7 +136,7 @@ export default function PromotionBanner({ galleryId }: PromotionBannerProps) {
               <div>
                 <p className="font-bold text-lg">{promo.name}</p>
                 {promo.description && (
-                  <p className="text-sm text-white/80">{promo.description}</p>
+                  <p className="text-sm text-white/90">{promo.description}</p>
                 )}
               </div>
             </div>
@@ -149,7 +149,7 @@ export default function PromotionBanner({ galleryId }: PromotionBannerProps) {
                 {promo.type === 'full_gallery' && 'Oferta Especial'}
               </div>
               {promo.ends_at && timeLeft[promo.id] && (
-                <p className="text-xs text-white/70 mt-1">
+                <p className="text-xs text-white/90 mt-1">
                   Termina en {timeLeft[promo.id]}
                 </p>
               )}

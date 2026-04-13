@@ -319,7 +319,7 @@ export default function PreciosPage() {
               step={100}
               value={basePrice}
               onChange={(e) => setBasePrice(parseInt(e.target.value) || 0)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
             />
             <p className="mt-1 text-xs text-gray-500">
               Precio sin descuento. Se usa cuando no aplica ningún tier.
@@ -520,7 +520,7 @@ export default function PreciosPage() {
                   value={tierForm.name}
                   onChange={(e) => setTierForm({ ...tierForm, name: e.target.value })}
                   placeholder="Ej: Pack 5-9 Fotos"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                 />
               </div>
 
@@ -532,7 +532,7 @@ export default function PreciosPage() {
                     min={1}
                     value={tierForm.min_photos}
                     onChange={(e) => setTierForm({ ...tierForm, min_photos: parseInt(e.target.value) || '' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                   />
                 </div>
                 <div>
@@ -545,7 +545,7 @@ export default function PreciosPage() {
                     value={tierForm.max_photos === null ? '' : tierForm.max_photos}
                     onChange={(e) => setTierForm({ ...tierForm, max_photos: e.target.value ? parseInt(e.target.value) : null })}
                     placeholder="Sin límite"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                   />
                 </div>
               </div>
@@ -559,7 +559,7 @@ export default function PreciosPage() {
                     step={100}
                     value={tierForm.price_per_photo}
                     onChange={(e) => setTierForm({ ...tierForm, price_per_photo: parseInt(e.target.value) || '' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                   />
                 </div>
                 <div>
@@ -570,7 +570,7 @@ export default function PreciosPage() {
                     max={100}
                     value={tierForm.discount_percentage}
                     onChange={(e) => setTierForm({ ...tierForm, discount_percentage: parseInt(e.target.value) || '' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                   />
                 </div>
               </div>
@@ -583,7 +583,7 @@ export default function PreciosPage() {
                     min={0}
                     value={tierForm.sort_order}
                     onChange={(e) => setTierForm({ ...tierForm, sort_order: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                   />
                 </div>
                 <div>

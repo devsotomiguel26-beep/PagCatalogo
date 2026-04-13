@@ -14,6 +14,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -85,20 +86,20 @@ export default function AdminLayout({
       {/* Top Navigation */}
       <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
+          <div className="flex justify-between items-center min-h-[4rem]">
+            <div className="flex items-center flex-1 min-w-0">
               {/* Logo/Título */}
               <div className="flex-shrink-0 flex items-center">
                 <Link href="/admin/dashboard" className="text-xl font-bold text-red-600">
-                  Admin Panel
+                  Admin
                 </Link>
               </div>
 
               {/* Navigation Links */}
-              <div className="hidden sm:ml-8 sm:flex sm:space-x-4">
+              <div className="hidden lg:ml-6 lg:flex lg:flex-wrap lg:gap-x-1 lg:gap-y-1">
                 <Link
                   href="/admin/dashboard"
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium ${
+                  className={`inline-flex items-center px-2 py-1.5 text-xs font-medium whitespace-nowrap ${
                     pathname === '/admin/dashboard'
                       ? 'text-red-600 border-b-2 border-red-600'
                       : 'text-gray-700 hover:text-red-600'
@@ -108,7 +109,7 @@ export default function AdminLayout({
                 </Link>
                 <Link
                   href="/admin/galerias"
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium ${
+                  className={`inline-flex items-center px-2 py-1.5 text-xs font-medium whitespace-nowrap ${
                     pathname?.startsWith('/admin/galerias')
                       ? 'text-red-600 border-b-2 border-red-600'
                       : 'text-gray-700 hover:text-red-600'
@@ -118,7 +119,7 @@ export default function AdminLayout({
                 </Link>
                 <Link
                   href="/admin/solicitudes"
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium ${
+                  className={`inline-flex items-center px-2 py-1.5 text-xs font-medium whitespace-nowrap ${
                     pathname?.startsWith('/admin/solicitudes')
                       ? 'text-red-600 border-b-2 border-red-600'
                       : 'text-gray-700 hover:text-red-600'
@@ -128,7 +129,7 @@ export default function AdminLayout({
                 </Link>
                 <Link
                   href="/admin/fotografos"
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium ${
+                  className={`inline-flex items-center px-2 py-1.5 text-xs font-medium whitespace-nowrap ${
                     pathname?.startsWith('/admin/fotografos')
                       ? 'text-red-600 border-b-2 border-red-600'
                       : 'text-gray-700 hover:text-red-600'
@@ -138,7 +139,7 @@ export default function AdminLayout({
                 </Link>
                 <Link
                   href="/admin/liquidaciones"
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium ${
+                  className={`inline-flex items-center px-2 py-1.5 text-xs font-medium whitespace-nowrap ${
                     pathname?.startsWith('/admin/liquidaciones')
                       ? 'text-red-600 border-b-2 border-red-600'
                       : 'text-gray-700 hover:text-red-600'
@@ -148,7 +149,7 @@ export default function AdminLayout({
                 </Link>
                 <Link
                   href="/admin/reportes"
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium ${
+                  className={`inline-flex items-center px-2 py-1.5 text-xs font-medium whitespace-nowrap ${
                     pathname?.startsWith('/admin/reportes')
                       ? 'text-red-600 border-b-2 border-red-600'
                       : 'text-gray-700 hover:text-red-600'
@@ -158,7 +159,7 @@ export default function AdminLayout({
                 </Link>
                 <Link
                   href="/admin/promociones"
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium ${
+                  className={`inline-flex items-center px-2 py-1.5 text-xs font-medium whitespace-nowrap ${
                     pathname?.startsWith('/admin/promociones')
                       ? 'text-red-600 border-b-2 border-red-600'
                       : 'text-gray-700 hover:text-red-600'
@@ -168,7 +169,7 @@ export default function AdminLayout({
                 </Link>
                 <Link
                   href="/admin/configuracion"
-                  className={`inline-flex items-center px-3 py-2 text-sm font-medium ${
+                  className={`inline-flex items-center px-2 py-1.5 text-xs font-medium whitespace-nowrap ${
                     pathname?.startsWith('/admin/configuracion')
                       ? 'text-red-600 border-b-2 border-red-600'
                       : 'text-gray-700 hover:text-red-600'
@@ -179,8 +180,23 @@ export default function AdminLayout({
               </div>
             </div>
 
+            {/* Mobile hamburger button */}
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="lg:hidden p-2 rounded-md text-gray-600 hover:text-red-600 hover:bg-gray-100"
+              aria-label="Abrir menú"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {menuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+
             {/* Right side actions */}
-            <div className="flex items-center space-x-4">
+            <div className="hidden lg:flex items-center space-x-3 flex-shrink-0 ml-4">
               <Link
                 href="/"
                 target="_blank"
@@ -198,8 +214,8 @@ export default function AdminLayout({
           </div>
         </div>
 
-        {/* Mobile menu */}
-        <div className="sm:hidden border-t border-gray-200">
+        {/* Mobile menu (visible en pantallas < lg) */}
+        {menuOpen && <div className="lg:hidden border-t border-gray-200">
           <div className="px-2 pt-2 pb-3 space-y-1">
             <Link
               href="/admin/dashboard"
@@ -281,8 +297,23 @@ export default function AdminLayout({
             >
               Configuración
             </Link>
+            <div className="border-t border-gray-200 mt-2 pt-2">
+              <Link
+                href="/"
+                target="_blank"
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50"
+              >
+                Ver Sitio Público
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-red-600 hover:bg-gray-50"
+              >
+                Cerrar Sesión
+              </button>
+            </div>
           </div>
-        </div>
+        </div>}
       </nav>
 
       {/* Main Content */}

@@ -64,7 +64,7 @@ export default function GalleryCard({
         ) : (
           <div className="flex items-center justify-center h-full">
             <svg
-              className="w-16 h-16 text-gray-300"
+              className="w-16 h-16 text-gray-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

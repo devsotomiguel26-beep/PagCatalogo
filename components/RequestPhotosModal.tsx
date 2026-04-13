@@ -112,7 +112,7 @@ export default function RequestPhotosModal({
             </div>
 
             {/* Preview de fotos */}
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
               {photos.slice(0, 12).map((photo) => (
                 <div key={photo.id} className="relative aspect-square bg-gray-200 rounded overflow-hidden">
                   <Image
@@ -145,7 +145,7 @@ export default function RequestPhotosModal({
                 type="text"
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent font-mono text-sm"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent font-mono text-sm text-gray-900 bg-white"
                 placeholder="Ej: VERANO2026"
                 disabled={isSubmitting}
               />
@@ -189,7 +189,7 @@ export default function RequestPhotosModal({
                 required
                 value={parentName}
                 onChange={(e) => setParentName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
                 placeholder="Ej: María González"
                 disabled={isSubmitting}
               />
@@ -205,7 +205,7 @@ export default function RequestPhotosModal({
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
                 placeholder="tu-email@ejemplo.com"
                 disabled={isSubmitting}
               />
@@ -224,7 +224,7 @@ export default function RequestPhotosModal({
                 required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
                 placeholder="Ej: +56 9 1234 5678"
                 disabled={isSubmitting}
               />
@@ -243,7 +243,7 @@ export default function RequestPhotosModal({
                 required
                 value={childName}
                 onChange={(e) => setChildName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
                 placeholder="Ej: Matías González"
                 disabled={isSubmitting}
               />

@@ -597,7 +597,7 @@ export default function PromocionesPage() {
                   value={form.name}
                   onChange={e => setForm({ ...form, name: e.target.value })}
                   placeholder="Ej: Especial Torneo de Verano"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                 />
               </div>
 
@@ -608,7 +608,7 @@ export default function PromocionesPage() {
                   onChange={e => setForm({ ...form, description: e.target.value })}
                   placeholder="Descripción visible para los clientes"
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                 />
               </div>
 
@@ -618,7 +618,7 @@ export default function PromocionesPage() {
                 <select
                   value={form.type}
                   onChange={e => setForm({ ...form, type: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                 >
                   <option value="percentage_discount">Descuento porcentual (%)</option>
                   <option value="fixed_discount">Descuento fijo (CLP)</option>
@@ -639,7 +639,7 @@ export default function PromocionesPage() {
                         max={100}
                         value={form.discount_percentage}
                         onChange={e => setForm({ ...form, discount_percentage: parseInt(e.target.value) || '' })}
-                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                       />
                       <span className="text-gray-500">%</span>
                     </div>
@@ -656,7 +656,7 @@ export default function PromocionesPage() {
                         step={100}
                         value={form.discount_amount}
                         onChange={e => setForm({ ...form, discount_amount: parseInt(e.target.value) || '' })}
-                        className="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                        className="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                       />
                     </div>
                   </div>
@@ -672,7 +672,7 @@ export default function PromocionesPage() {
                         step={100}
                         value={form.fixed_price_per_photo}
                         onChange={e => setForm({ ...form, fixed_price_per_photo: parseInt(e.target.value) || '' })}
-                        className="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                        className="w-40 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                       />
                       <span className="text-gray-500">/foto</span>
                     </div>
@@ -686,7 +686,7 @@ export default function PromocionesPage() {
                 <select
                   value={form.scope}
                   onChange={e => setForm({ ...form, scope: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                 >
                   <option value="global">Global (todas las galerías)</option>
                   <option value="gallery">Galería específica</option>
@@ -701,7 +701,7 @@ export default function PromocionesPage() {
                   <select
                     value={form.scope_gallery_id}
                     onChange={e => setForm({ ...form, scope_gallery_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                   >
                     <option value="">Seleccionar galería...</option>
                     {galleries.map(g => (
@@ -717,7 +717,7 @@ export default function PromocionesPage() {
                   <select
                     value={form.scope_category_id}
                     onChange={e => setForm({ ...form, scope_category_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                   >
                     <option value="">Seleccionar categoría...</option>
                     {categories.map(c => (
@@ -733,7 +733,7 @@ export default function PromocionesPage() {
                   <select
                     value={form.scope_event_type}
                     onChange={e => setForm({ ...form, scope_event_type: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                   >
                     <option value="">Seleccionar tipo...</option>
                     {EVENT_TYPES.map(t => (
@@ -752,7 +752,7 @@ export default function PromocionesPage() {
                     min={1}
                     value={form.min_photos}
                     onChange={e => setForm({ ...form, min_photos: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                   />
                 </div>
                 <div>
@@ -765,7 +765,7 @@ export default function PromocionesPage() {
                     value={form.max_uses}
                     onChange={e => setForm({ ...form, max_uses: parseInt(e.target.value) || '' })}
                     placeholder="Ilimitado"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                   />
                 </div>
               </div>
@@ -778,7 +778,7 @@ export default function PromocionesPage() {
                     type="datetime-local"
                     value={form.starts_at}
                     onChange={e => setForm({ ...form, starts_at: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                   />
                 </div>
                 <div>
@@ -789,7 +789,7 @@ export default function PromocionesPage() {
                     type="datetime-local"
                     value={form.ends_at}
                     onChange={e => setForm({ ...form, ends_at: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                   />
                 </div>
               </div>
@@ -803,7 +803,7 @@ export default function PromocionesPage() {
                     min={0}
                     value={form.priority}
                     onChange={e => setForm({ ...form, priority: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white"
                   />
                   <p className="text-xs text-gray-400 mt-1">Mayor = se aplica primero</p>
                 </div>
@@ -840,7 +840,7 @@ export default function PromocionesPage() {
                     value={form.codes}
                     onChange={e => setForm({ ...form, codes: e.target.value })}
                     placeholder="Ej: VERANO2026, TORNEO50, DESCUENTO10"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm font-mono"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm text-gray-900 bg-white font-mono"
                   />
                   <p className="text-xs text-gray-400 mt-1">Se convertirán a mayúsculas automáticamente</p>
                 </div>
@@ -890,7 +890,7 @@ export default function PromocionesPage() {
                 value={newCode}
                 onChange={e => setNewCode(e.target.value.toUpperCase())}
                 placeholder="NUEVO_CODIGO"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
                 onKeyDown={e => e.key === 'Enter' && handleAddCode()}
               />
               <button
