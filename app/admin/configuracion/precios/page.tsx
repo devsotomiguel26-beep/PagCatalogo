@@ -66,7 +66,7 @@ export default function PreciosPage() {
   async function fetchPricingData() {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/pricing');
+      const res = await fetch('/api/admin/pricing', { cache: 'no-store' });
       const result = await res.json();
 
       if (result.success) {

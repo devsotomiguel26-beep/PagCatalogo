@@ -154,7 +154,7 @@ export default function PromocionesPage() {
   async function fetchPromotions() {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/promotions');
+      const res = await fetch('/api/admin/promotions', { cache: 'no-store' });
       const result = await res.json();
       if (result.success) {
         setPromotions(result.data || []);
