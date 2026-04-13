@@ -3,10 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 import { invalidatePricingCache } from '@/lib/pricingTiers';
 
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
 /**
  * GET /api/admin/pricing
@@ -14,6 +18,8 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
  */
 export async function GET() {
   try {
+    const supabase = getSupabase();
+
     const [configResult, tiersResult] = await Promise.all([
       supabase.from('pricing_config').select('*').single(),
       supabase.from('pricing_tiers').select('*').order('sort_order', { ascending: true }),
@@ -38,7 +44,12 @@ export async function GET() {
         },
       },
       {
-        headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' },
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Surrogate-Control': 'no-store',
+        },
       }
     );
   } catch (error: any) {
@@ -57,6 +68,7 @@ export async function GET() {
  */
 export async function PUT(request: NextRequest) {
   try {
+    const supabase = getSupabase();
     const body = await request.json();
     const { base_price_per_photo, pricing_tiers_enabled } = body;
 
@@ -69,7 +81,6 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Obtener el ID de la fila de config (singleton)
     const { data: existing, error: fetchError } = await supabase
       .from('pricing_config')
       .select('id')
