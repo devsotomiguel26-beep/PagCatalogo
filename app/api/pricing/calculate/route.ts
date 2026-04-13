@@ -34,10 +34,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Calcular precio
-    const pricing = calculatePrice(photo_count);
+    const pricing = await calculatePrice(photo_count);
 
     // Obtener información del siguiente tier
-    const nextTier = getNextTier(photo_count);
+    const nextTier = await getNextTier(photo_count);
 
     return NextResponse.json({
       ...pricing,
@@ -79,8 +79,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const pricing = calculatePrice(photo_count);
-    const nextTier = getNextTier(photo_count);
+    const pricing = await calculatePrice(photo_count);
+    const nextTier = await getNextTier(photo_count);
 
     return NextResponse.json({
       ...pricing,

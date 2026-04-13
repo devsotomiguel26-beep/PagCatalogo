@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     // Calcular precio con sistema de tiers
     const photoCount = photoRequest.photo_ids.length;
-    const pricing = calculatePrice(photoCount);
+    const pricing = await calculatePrice(photoCount);
 
     console.log('📸 Fotos:', photoCount);
     console.log('💰 Pricing:', {

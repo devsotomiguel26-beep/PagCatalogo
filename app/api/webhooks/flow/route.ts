@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       // Verificar si ya fue procesado (evitar duplicados)
       const { data: existingRequest } = await supabase
         .from('photo_requests')
-        .select('status, photos_sent_at, gallery_id, photo_ids')
+        .select('status, photos_sent_at, gallery_id, photo_ids, price_per_photo, base_price_per_photo')
         .eq('id', requestId)
         .single();
 
@@ -138,8 +138,8 @@ export async function POST(request: NextRequest) {
 
       console.log('💰 Configuración de comisiones:', commissionConfig);
 
-      // Obtener precio por foto actual
-      const pricePerPhoto = parseInt(process.env.PRICE_PER_PHOTO || '2000');
+      // Usar el precio guardado en la solicitud (snapshot al momento de crear el pago)
+      const pricePerPhoto = existingRequest.price_per_photo || parseInt(process.env.PRICE_PER_PHOTO || '2000');
       const photoCount = existingRequest.photo_ids?.length || 0;
 
       // Extraer comisión real de Flow si está disponible
