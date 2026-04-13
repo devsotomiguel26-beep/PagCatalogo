@@ -265,16 +265,32 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log('🔑 Using service_role_key:', hasServiceKey, '| Deleting tier:', id);
+    const serviceKeyPrefix = supabaseServiceKey ? supabaseServiceKey.substring(0, 20) + '...' : 'MISSING';
+    console.log('🔑 DELETE tier debug:', {
+      hasServiceKey,
+      keyPrefix: serviceKeyPrefix,
+      tierId: id,
+      supabaseUrl,
+    });
 
-    // Verificar que no sea el tier base (sort_order 0, min_photos 1)
-    const { data: tier } = await supabase
+    // Primero verificar que el tier existe
+    const { data: tier, error: findError } = await supabase
       .from('pricing_tiers')
-      .select('sort_order, min_photos')
+      .select('*')
       .eq('id', id)
       .single();
 
-    if (tier && tier.min_photos === 1 && tier.sort_order === 0) {
+    console.log('🔍 Tier encontrado:', tier ? 'SI' : 'NO', '| Error:', findError?.message || 'ninguno');
+
+    if (!tier) {
+      return NextResponse.json(
+        { success: false, error: 'Tier no encontrado', debug: { findError: findError?.message } },
+        { status: 404 }
+      );
+    }
+
+    // Verificar que no sea el tier base (sort_order 0, min_photos 1)
+    if (tier.min_photos === 1 && tier.sort_order === 0) {
       return NextResponse.json(
         { success: false, error: 'No se puede eliminar el tier de precio base' },
         { status: 400 }
@@ -287,14 +303,23 @@ export async function DELETE(request: NextRequest) {
       .eq('id', id)
       .select();
 
+    console.log('🗑️ DELETE result:', { deleted, error: error?.message || 'ninguno' });
+
     if (error) {
       console.error('Error deleting tier:', error);
-      throw error;
+      return NextResponse.json(
+        { success: false, error: error.message, debug: { code: error.code, details: error.details } },
+        { status: 500 }
+      );
     }
 
     if (!deleted || deleted.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'No se pudo eliminar el tier. Verifique los permisos de la base de datos (RLS).' },
+        {
+          success: false,
+          error: 'DELETE ejecutó sin error pero no eliminó filas. Problema de RLS.',
+          debug: { hasServiceKey, tierId: id, tierExists: !!tier },
+        },
         { status: 403 }
       );
     }
