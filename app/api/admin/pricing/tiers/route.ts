@@ -4,11 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 /**
  * Valida que un tier no se solape con los existentes
@@ -265,26 +262,17 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const serviceKeyPrefix = supabaseServiceKey ? supabaseServiceKey.substring(0, 20) + '...' : 'MISSING';
-    console.log('🔑 DELETE tier debug:', {
-      hasServiceKey,
-      keyPrefix: serviceKeyPrefix,
-      tierId: id,
-      supabaseUrl,
-    });
-
-    // Primero verificar que el tier existe
-    const { data: tier, error: findError } = await supabase
+    // Verificar que el tier existe
+    const { data: tiers } = await supabase
       .from('pricing_tiers')
       .select('*')
-      .eq('id', id)
-      .single();
+      .eq('id', id);
 
-    console.log('🔍 Tier encontrado:', tier ? 'SI' : 'NO', '| Error:', findError?.message || 'ninguno');
+    const tier = tiers && tiers.length > 0 ? tiers[0] : null;
 
     if (!tier) {
       return NextResponse.json(
-        { success: false, error: 'Tier no encontrado', debug: { findError: findError?.message } },
+        { success: false, error: 'Tier no encontrado. Es posible que ya haya sido eliminado.' },
         { status: 404 }
       );
     }
@@ -303,23 +291,14 @@ export async function DELETE(request: NextRequest) {
       .eq('id', id)
       .select();
 
-    console.log('🗑️ DELETE result:', { deleted, error: error?.message || 'ninguno' });
-
     if (error) {
       console.error('Error deleting tier:', error);
-      return NextResponse.json(
-        { success: false, error: error.message, debug: { code: error.code, details: error.details } },
-        { status: 500 }
-      );
+      throw error;
     }
 
     if (!deleted || deleted.length === 0) {
       return NextResponse.json(
-        {
-          success: false,
-          error: 'DELETE ejecutó sin error pero no eliminó filas. Problema de RLS.',
-          debug: { hasServiceKey, tierId: id, tierExists: !!tier },
-        },
+        { success: false, error: 'No se pudo eliminar el tier. Verifique los permisos de la base de datos.' },
         { status: 403 }
       );
     }
