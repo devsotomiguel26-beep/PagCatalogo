@@ -4,8 +4,11 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
 
 /**
  * Valida que un tier no se solape con los existentes
@@ -224,6 +227,13 @@ export async function PUT(request: NextRequest) {
       throw error;
     }
 
+    if (!data) {
+      return NextResponse.json(
+        { success: false, error: 'No se pudo actualizar el tier. Verifique los permisos de la base de datos.' },
+        { status: 403 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
       data,
@@ -255,6 +265,8 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    console.log('🔑 Using service_role_key:', hasServiceKey, '| Deleting tier:', id);
+
     // Verificar que no sea el tier base (sort_order 0, min_photos 1)
     const { data: tier } = await supabase
       .from('pricing_tiers')
@@ -269,14 +281,22 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const { error } = await supabase
+    const { data: deleted, error } = await supabase
       .from('pricing_tiers')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .select();
 
     if (error) {
       console.error('Error deleting tier:', error);
       throw error;
+    }
+
+    if (!deleted || deleted.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'No se pudo eliminar el tier. Verifique los permisos de la base de datos (RLS).' },
+        { status: 403 }
+      );
     }
 
     return NextResponse.json({
